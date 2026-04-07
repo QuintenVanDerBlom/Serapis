@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
@@ -41,7 +42,7 @@ const LoginScreen = ({ navigation }) => {
         await AsyncStorage.setItem('currentUser', JSON.stringify(user));
         Alert.alert('Success', 'Login successful!', [
           { text: 'OK', onPress: () => {
-            console.log('User logged in:', user.username);
+            navigation.navigate('Home');
           }}
         ]);
       } else {
@@ -102,10 +103,14 @@ const LoginScreen = ({ navigation }) => {
               <TouchableOpacity
                 style={styles.eyeIcon}
                 onPress={() => setShowPassword(!showPassword)}
+                accessibilityRole="button"
+                accessibilityLabel="Toggle password visibility"
               >
-                <Text style={styles.eyeIconText}>
-                  {showPassword ? 'eye' : 'eye-slash'}
-                </Text>
+                <Ionicons
+                  name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                  size={20}
+                  color="#52b788"
+                />
               </TouchableOpacity>
             </View>
           </View>
@@ -229,10 +234,6 @@ const styles = StyleSheet.create({
     padding: 14,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  eyeIconText: {
-    fontSize: 16,
-    color: '#52b788',
   },
   forgotPasswordContainer: {
     alignItems: 'flex-end',

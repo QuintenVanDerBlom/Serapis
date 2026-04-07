@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 
 const RegisterScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
@@ -114,17 +115,28 @@ const RegisterScreen = ({ navigation }) => {
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>password</Text>
-            <TextInput
-              style={[
-                styles.input,
-                passwordError ? styles.inputError : null
-              ]}
-              value={password}
-              onChangeText={handlePasswordChange}
-              placeholder="Enter password"
-              placeholderTextColor="#999"
-              secureTextEntry={!showPassword}
-            />
+            <View style={[styles.passwordContainer, passwordError ? styles.inputError : null]}>
+              <TextInput
+                style={styles.passwordInput}
+                value={password}
+                onChangeText={handlePasswordChange}
+                placeholder="Enter password"
+                placeholderTextColor="#999"
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setShowPassword(!showPassword)}
+                accessibilityRole="button"
+                accessibilityLabel="Toggle password visibility"
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                  size={20}
+                  color="#52b788"
+                />
+              </TouchableOpacity>
+            </View>
             {passwordError ? (
               <Text style={styles.errorText}>{passwordError}</Text>
             ) : null}
@@ -132,14 +144,28 @@ const RegisterScreen = ({ navigation }) => {
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>confirm password</Text>
-            <TextInput
-              style={styles.input}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              placeholder="Confirm password"
-              placeholderTextColor="#999"
-              secureTextEntry={!showPassword}
-            />
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="Confirm password"
+                placeholderTextColor="#999"
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setShowPassword(!showPassword)}
+                accessibilityRole="button"
+                accessibilityLabel="Toggle password visibility"
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                  size={20}
+                  color="#52b788"
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.checkboxContainer}>
@@ -244,6 +270,32 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#b7e4c7',
+    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 14,
+    fontSize: 16,
+  },
+  eyeIcon: {
+    padding: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   inputError: {
     borderColor: '#e63946',

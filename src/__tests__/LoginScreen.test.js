@@ -44,6 +44,42 @@ describe('LoginScreen', () => {
     });
   });
 
+  it('navigates to home after successful login', async () => {
+    const navigation = createNavigation();
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    AsyncStorage.getItem.mockResolvedValueOnce(
+      JSON.stringify([{ username: 'alice', password: 'secret123!' }])
+    );
+
+    const { getByPlaceholderText, getByText } = render(
+      <LoginScreen navigation={navigation} />
+    );
+
+    fireEvent.changeText(getByPlaceholderText('guest_user'), 'alice');
+    fireEvent.changeText(getByPlaceholderText('Enter password'), 'secret123!');
+    fireEvent.press(getByText('Submit'));
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith(
+        'Success',
+        'Login successful!',
+        expect.any(Array)
+      );
+    });
+
+    const successButtons = alertSpy.mock.calls.find(call => call[0] === 'Success')?.[2] || [];
+    successButtons[0].onPress();
+
+    expect(navigation.navigate).toHaveBeenCalledWith('Home');
+  });
+
+  it('renders a password visibility toggle button', () => {
+    const navigation = createNavigation();
+    const { getByLabelText } = render(<LoginScreen navigation={navigation} />);
+
+    expect(getByLabelText('Toggle password visibility')).toBeOnTheScreen();
+  });
+
   it('navigates to register when sign-up link is pressed', () => {
     const navigation = createNavigation();
     const { getByText } = render(<LoginScreen navigation={navigation} />);

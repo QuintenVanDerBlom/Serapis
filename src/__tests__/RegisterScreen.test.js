@@ -30,6 +30,13 @@ describe('RegisterScreen', () => {
     expect(getByText(/password must contain at least 1 number/i)).toBeOnTheScreen();
   });
 
+  it('renders password visibility toggle controls', () => {
+    const navigation = createNavigation();
+    const { getAllByLabelText } = render(<RegisterScreen navigation={navigation} />);
+
+    expect(getAllByLabelText('Toggle password visibility')).toHaveLength(2);
+  });
+
   it('navigates to login when login link is pressed', () => {
     const navigation = createNavigation();
     const { getByText } = render(<RegisterScreen navigation={navigation} />);
