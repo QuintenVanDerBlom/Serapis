@@ -17,14 +17,14 @@ const MENU_ITEMS = [
   { key: 'walks', label: 'Walks', icon: 'walk-outline' },
   { key: 'music', label: 'Music', icon: 'musical-notes-outline' },
   { key: 'wellness', label: 'Wellness', icon: 'leaf-outline' },
-  { key: 'faq', label: 'FAQ', icon: 'help-circle-outline' },
+  { key: 'profile', label: 'Profile', icon: 'person-outline' },
 ];
 
 const TABS = [
   { key: 'home', label: 'Home', icon: 'home-outline', activeIcon: 'home' },
-  { key: 'add', label: 'Add', icon: 'add-circle-outline', activeIcon: 'add-circle' },
-  { key: 'bookmarks', label: 'Saved', icon: 'bookmark-outline', activeIcon: 'bookmark' },
-  { key: 'trends', label: 'Trends', icon: 'analytics-outline', activeIcon: 'analytics' },
+  { key: 'add', label: 'Walks', icon: 'walk-outline', activeIcon: 'walk' },
+  { key: 'bookmarks', label: 'Music', icon: 'musical-notes-outline', activeIcon: 'musical-notes' },
+  { key: 'trends', label: 'Wellness', icon: 'leaf-outline', activeIcon: 'leaf' },
   { key: 'profile', label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
 ];
 
@@ -78,6 +78,20 @@ const HomeScreen = ({ navigation }) => {
     }).start();
   };
 
+  const navigateToTab = tabKey => {
+    if (tabKey === 'add') {
+      navigation?.navigate('WalkingRoutes');
+    } else if (tabKey === 'bookmarks') {
+      navigation?.navigate('Music');
+    } else if (tabKey === 'trends') {
+      navigation?.navigate('Wellness');
+    } else if (tabKey === 'profile') {
+      navigation?.navigate('Profile');
+    } else {
+      setActiveTab('home');
+    }
+  };
+
   const closeMenu = nextTabKey => {
     Animated.timing(menuAnim, {
       toValue: 0,
@@ -89,6 +103,10 @@ const HomeScreen = ({ navigation }) => {
         navigation?.navigate('WalkingRoutes');
       } else if (nextTabKey === 'music') {
         navigation?.navigate('Music');
+      } else if (nextTabKey === 'wellness') {
+        navigation?.navigate('Wellness');
+      } else if (nextTabKey === 'profile') {
+        navigation?.navigate('Profile');
       } else if (nextTabKey && TAB_CONTENT[nextTabKey]) {
         setActiveTab(nextTabKey);
       }
@@ -171,7 +189,7 @@ const HomeScreen = ({ navigation }) => {
               style={styles.navButton}
               accessibilityRole="button"
               accessibilityLabel={`Go to ${tab.key} tab`}
-              onPress={() => setActiveTab(tab.key)}
+              onPress={() => navigateToTab(tab.key)}
             >
               <Ionicons
                 name={activeTab === tab.key ? tab.activeIcon : tab.icon}

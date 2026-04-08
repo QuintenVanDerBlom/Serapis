@@ -27,13 +27,40 @@ describe('HomeScreen', () => {
     expect(getByLabelText('Go to profile tab')).toBeOnTheScreen();
   });
 
-  it('changes hero content when a bottom tab is pressed', () => {
+  it('navigates to Wellness when trends tab is pressed', () => {
     const navigation = createNavigation();
-    const { getByLabelText, getByText } = render(<HomeScreen navigation={navigation} />);
+    const { getByLabelText } = render(<HomeScreen navigation={navigation} />);
 
     fireEvent.press(getByLabelText('Go to trends tab'));
 
-    expect(getByText('You are building consistency')).toBeOnTheScreen();
+    expect(navigation.navigate).toHaveBeenCalledWith('Wellness');
+  });
+
+  it('navigates to WalkingRoutes when add tab is pressed', () => {
+    const navigation = createNavigation();
+    const { getByLabelText } = render(<HomeScreen navigation={navigation} />);
+
+    fireEvent.press(getByLabelText('Go to add tab'));
+
+    expect(navigation.navigate).toHaveBeenCalledWith('WalkingRoutes');
+  });
+
+  it('navigates to Music when bookmarks tab is pressed', () => {
+    const navigation = createNavigation();
+    const { getByLabelText } = render(<HomeScreen navigation={navigation} />);
+
+    fireEvent.press(getByLabelText('Go to bookmarks tab'));
+
+    expect(navigation.navigate).toHaveBeenCalledWith('Music');
+  });
+
+  it('navigates to Profile when profile tab is pressed', () => {
+    const navigation = createNavigation();
+    const { getByLabelText } = render(<HomeScreen navigation={navigation} />);
+
+    fireEvent.press(getByLabelText('Go to profile tab'));
+
+    expect(navigation.navigate).toHaveBeenCalledWith('Profile');
   });
 
   it('opens and closes the hamburger menu', () => {
@@ -42,12 +69,11 @@ describe('HomeScreen', () => {
       <HomeScreen navigation={navigation} />
     );
 
-    expect(queryByText('Walks')).not.toBeOnTheScreen();
+    expect(queryByText('Navigate your app')).not.toBeOnTheScreen();
 
     fireEvent.press(getByLabelText('Open navigation menu'));
 
-    expect(getByText('Walks')).toBeOnTheScreen();
-    expect(getByText('Music')).toBeOnTheScreen();
+    expect(getByText('Navigate your app')).toBeOnTheScreen();
 
     fireEvent.press(getByLabelText('Close navigation menu'));
 
@@ -55,7 +81,7 @@ describe('HomeScreen', () => {
       jest.advanceTimersByTime(250);
     });
 
-    expect(queryByText('Walks')).not.toBeOnTheScreen();
+    expect(queryByText('Navigate your app')).not.toBeOnTheScreen();
   });
 
   it('navigates to walking routes from hero CTA', () => {
@@ -78,10 +104,11 @@ describe('HomeScreen', () => {
 
   it('navigates to music from menu item', () => {
     const navigation = createNavigation();
-    const { getByLabelText, getByText } = render(<HomeScreen navigation={navigation} />);
+    const { getByLabelText, getByText, getAllByText } = render(<HomeScreen navigation={navigation} />);
 
     fireEvent.press(getByLabelText('Open navigation menu'));
-    fireEvent.press(getByText('Music'));
+    const musicItems = getAllByText('Music');
+    fireEvent.press(musicItems[musicItems.length - 1]);
 
     act(() => {
       jest.advanceTimersByTime(250);

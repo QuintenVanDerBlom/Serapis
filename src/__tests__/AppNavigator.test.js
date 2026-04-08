@@ -64,6 +64,18 @@ jest.mock('../screens/MusicPlayerScreen', () => {
   return () => React.createElement(Text, null, 'Music Player Screen');
 });
 
+jest.mock('../screens/WellnessScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return () => React.createElement(Text, null, 'Wellness Screen');
+});
+
+jest.mock('../screens/ProfileScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return () => React.createElement(Text, null, 'Profile Screen');
+});
+
 describe('AppNavigator', () => {
   beforeEach(() => {
     jest.clearAllMocks();

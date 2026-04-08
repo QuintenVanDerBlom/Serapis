@@ -10,6 +10,8 @@ import HomeScreen from '../screens/HomeScreen';
 import WalkingRoutesScreen from '../screens/WalkingRoutesScreen';
 import MusicScreen from '../screens/MusicScreen';
 import MusicPlayerScreen from '../screens/MusicPlayerScreen';
+import WellnessScreen from '../screens/WellnessScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 const Stack = createStackNavigator();
 
@@ -85,6 +87,16 @@ const AppNavigator = () => {
           name="MusicPlayer"
           component={MusicPlayerScreen}
           options={{ title: 'Music Player' }}
+        />
+        <Stack.Screen
+          name="Wellness"
+          component={WellnessScreen}
+          options={{ title: 'Wellness' }}
+        />
+        <Stack.Screen
+          name="Profile"
+          component={ProfileScreen}
+          options={{ title: 'Profile' }}
         />
       </Stack.Navigator>
     </NavigationContainer>
