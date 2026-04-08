@@ -7,6 +7,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import HomeScreen from '../screens/HomeScreen';
+import WalkingRoutesScreen from '../screens/WalkingRoutesScreen';
+import MusicScreen from '../screens/MusicScreen';
+import MusicPlayerScreen from '../screens/MusicPlayerScreen';
 
 const Stack = createStackNavigator();
 
@@ -67,6 +70,21 @@ const AppNavigator = () => {
           name="Home"
           component={HomeScreen}
           options={{ title: 'Home' }}
+        />
+        <Stack.Screen
+          name="WalkingRoutes"
+          component={WalkingRoutesScreen}
+          options={{ title: 'Walking Routes' }}
+        />
+        <Stack.Screen
+          name="Music"
+          component={MusicScreen}
+          options={{ title: 'Music' }}
+        />
+        <Stack.Screen
+          name="MusicPlayer"
+          component={MusicPlayerScreen}
+          options={{ title: 'Music Player' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

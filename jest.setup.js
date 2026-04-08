@@ -8,3 +8,15 @@ jest.mock('@expo/vector-icons', () => ({
     return React.createElement('Ionicons', props, props.children);
   },
 }));
+
+jest.mock('react-native-webview', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+
+  const WebView = props => React.createElement(View, { ...props, children: props.children });
+
+  return {
+    __esModule: true,
+    WebView,
+  };
+});

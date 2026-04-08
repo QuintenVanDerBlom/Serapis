@@ -3,6 +3,10 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import HomeScreen from '../screens/HomeScreen';
 
 describe('HomeScreen', () => {
+  const createNavigation = () => ({
+    navigate: jest.fn(),
+  });
+
   beforeEach(() => {
     jest.useFakeTimers();
   });
@@ -13,7 +17,8 @@ describe('HomeScreen', () => {
   });
 
   it('renders home content and bottom navigation', () => {
-    const { getByText, getByLabelText } = render(<HomeScreen />);
+    const navigation = createNavigation();
+    const { getByText, getByLabelText } = render(<HomeScreen navigation={navigation} />);
 
     expect(getByText('Serapis')).toBeOnTheScreen();
     expect(getByText('Welcome back')).toBeOnTheScreen();
@@ -23,7 +28,8 @@ describe('HomeScreen', () => {
   });
 
   it('changes hero content when a bottom tab is pressed', () => {
-    const { getByLabelText, getByText } = render(<HomeScreen />);
+    const navigation = createNavigation();
+    const { getByLabelText, getByText } = render(<HomeScreen navigation={navigation} />);
 
     fireEvent.press(getByLabelText('Go to trends tab'));
 
@@ -31,7 +37,10 @@ describe('HomeScreen', () => {
   });
 
   it('opens and closes the hamburger menu', () => {
-    const { getByLabelText, getByText, queryByText } = render(<HomeScreen />);
+    const navigation = createNavigation();
+    const { getByLabelText, getByText, queryByText } = render(
+      <HomeScreen navigation={navigation} />
+    );
 
     expect(queryByText('Walks')).not.toBeOnTheScreen();
 
@@ -47,5 +56,37 @@ describe('HomeScreen', () => {
     });
 
     expect(queryByText('Walks')).not.toBeOnTheScreen();
+  });
+
+  it('navigates to walking routes from hero CTA', () => {
+    const navigation = createNavigation();
+    const { getByLabelText } = render(<HomeScreen navigation={navigation} />);
+
+    fireEvent.press(getByLabelText('Open walking routes'));
+
+    expect(navigation.navigate).toHaveBeenCalledWith('WalkingRoutes');
+  });
+
+  it('navigates to music from hero CTA', () => {
+    const navigation = createNavigation();
+    const { getByLabelText } = render(<HomeScreen navigation={navigation} />);
+
+    fireEvent.press(getByLabelText('Open music playlists'));
+
+    expect(navigation.navigate).toHaveBeenCalledWith('Music');
+  });
+
+  it('navigates to music from menu item', () => {
+    const navigation = createNavigation();
+    const { getByLabelText, getByText } = render(<HomeScreen navigation={navigation} />);
+
+    fireEvent.press(getByLabelText('Open navigation menu'));
+    fireEvent.press(getByText('Music'));
+
+    act(() => {
+      jest.advanceTimersByTime(250);
+    });
+
+    expect(navigation.navigate).toHaveBeenCalledWith('Music');
   });
 });

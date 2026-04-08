@@ -61,7 +61,7 @@ const TAB_CONTENT = {
   },
 };
 
-const HomeScreen = () => {
+const HomeScreen = ({ navigation }) => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
   const menuAnim = useRef(new Animated.Value(0)).current;
@@ -85,7 +85,11 @@ const HomeScreen = () => {
       easing: Easing.in(Easing.cubic),
       useNativeDriver: true,
     }).start(() => {
-      if (nextTabKey && TAB_CONTENT[nextTabKey]) {
+      if (nextTabKey === 'walks') {
+        navigation?.navigate('WalkingRoutes');
+      } else if (nextTabKey === 'music') {
+        navigation?.navigate('Music');
+      } else if (nextTabKey && TAB_CONTENT[nextTabKey]) {
         setActiveTab(nextTabKey);
       }
       setMenuVisible(false);
@@ -117,11 +121,21 @@ const HomeScreen = () => {
             <Text style={styles.description}>{content.description}</Text>
 
             <View style={styles.heroActions}>
-              <TouchableOpacity style={styles.primaryButton} accessibilityRole="button">
+              <TouchableOpacity
+                style={styles.primaryButton}
+                accessibilityRole="button"
+                accessibilityLabel="Open walking routes"
+                onPress={() => navigation?.navigate('WalkingRoutes')}
+              >
                 <Ionicons name="walk-outline" size={16} color="#fff" />
                 <Text style={styles.primaryButtonText}>Walking Routes</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.secondaryButton} accessibilityRole="button">
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                accessibilityRole="button"
+                accessibilityLabel="Open music playlists"
+                onPress={() => navigation?.navigate('Music')}
+              >
                 <Ionicons name="musical-notes-outline" size={16} color="#2d6a4f" />
                 <Text style={styles.secondaryButtonText}>Music Playlists</Text>
               </TouchableOpacity>
