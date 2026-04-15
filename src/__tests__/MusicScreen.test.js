@@ -12,7 +12,7 @@ describe('MusicScreen', () => {
     const navigation = createNavigation();
     const { getByText } = render(<MusicScreen navigation={navigation} />);
 
-    expect(getByText('Prototype Playlists')).toBeOnTheScreen();
+    expect(getByText('Your Playlists')).toBeOnTheScreen();
     expect(getByText('Mindful Morning')).toBeOnTheScreen();
     expect(getByText('Urban Flow Walk')).toBeOnTheScreen();
     expect(getByText('Evening Reset')).toBeOnTheScreen();

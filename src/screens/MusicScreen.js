@@ -31,7 +31,7 @@ const MusicScreen = ({ navigation }) => {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.heroCard}>
-          <Text style={styles.heroEyebrow}>Prototype Playlists</Text>
+          <Text style={styles.heroEyebrow}>Your Playlists</Text>
           <Text style={styles.heroTitle}>Choose a playlist</Text>
           <Text style={styles.heroSubtitle}>Selecting one opens the music player screen.</Text>
         </View>

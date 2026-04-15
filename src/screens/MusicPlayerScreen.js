@@ -74,7 +74,7 @@ const MusicPlayerScreen = ({ navigation, route }) => {
         <View style={styles.playerMain}>
           <View style={[styles.albumCard, { width: ARTWORK_SIZE, height: ARTWORK_SIZE }]}>
             <Ionicons name="image-outline" size={58} color="#9ca3af" />
-            <Text style={styles.placeholderLabel}>Placeholder Cover</Text>
+            <Text style={styles.placeholderLabel}>Album Cover</Text>
           </View>
 
           <View style={styles.trackHeaderRow}>

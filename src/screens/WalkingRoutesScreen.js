@@ -35,84 +35,102 @@ const ROUTES_BY_TYPE = {
   mindful: [
     {
       id: 'm1',
-      name: 'Park Breathing Loop',
-      distanceKm: 2.4,
-      durationMin: 32,
+      name: 'Het Park Serenity Loop',
+      destination: 'Euromast viewpoint',
+      distanceKm: 2.0,
+      durationMin: 28,
       difficulty: 'Easy',
-      start: 'Central Park Gate',
-      waypoints: [
-        'Head north towards the tree line',
-        'Turn right at the fountain path',
-        'Continue straight to the lake loop',
+      start: 'Het Park, Westzeedijk',
+      instructions: [
+        'Enter Het Park from the Westzeedijk gate',
+        'Follow the gravel path south past the pond',
+        'Bear right toward the Euromast lawn',
+        'Continue along the waterfront promenade',
+        'Loop back north through the tree-lined avenue',
       ],
     },
     {
       id: 'm2',
-      name: 'Riverside Slow Walk',
+      name: 'Kralingse Plas Waterside',
+      destination: 'Kralingse Bos café',
       distanceKm: 3.1,
       durationMin: 40,
       difficulty: 'Easy',
-      start: 'Riverside Promenade',
-      waypoints: [
-        'Follow the river south',
-        'Keep left at the bridge split',
-        'Return via the shaded boardwalk',
+      start: 'Kralingse Bos parking',
+      instructions: [
+        'Head south from the parking toward the lake shore',
+        'Follow the waterside path along the western bank',
+        'Continue past the rowing club and picnic meadow',
+        'Turn north at the south-east corner of the lake',
+        'Return along the eastern tree-lined path to the start',
       ],
     },
   ],
   energy: [
     {
       id: 'e1',
-      name: 'Uptown Tempo Route',
-      distanceKm: 4.2,
-      durationMin: 38,
+      name: 'Erasmusbrug Waterfront',
+      destination: 'Leuvehaven marina',
+      distanceKm: 3.5,
+      durationMin: 35,
       difficulty: 'Moderate',
-      start: 'City Plaza',
-      waypoints: [
-        'Warm up for 5 minutes',
-        'Push pace through Main Street incline',
-        'Recover on the downhill boulevard',
+      start: 'Wilhelminaplein',
+      instructions: [
+        'Cross the Erasmusbrug heading north',
+        'Turn left along the Boompjes waterfront',
+        'Continue west past Willemsplein',
+        'Turn south at Leuvehaven along the marina',
+        'Cross back via the Erasmusbrug to Wilhelminaplein',
       ],
     },
     {
       id: 'e2',
-      name: 'Hill Sprint Circuit',
-      distanceKm: 3.7,
-      durationMin: 34,
+      name: 'Zuiderpark Tempo Loop',
+      destination: 'Zuiderpark sports fields',
+      distanceKm: 3.0,
+      durationMin: 30,
       difficulty: 'Moderate',
-      start: 'Hill Park Entrance',
-      waypoints: [
-        'Climb the first hill segment',
-        'Jog recovery at the lookout',
-        'Repeat one final incline push',
+      start: 'Zuiderpark north entrance',
+      instructions: [
+        'Enter through the north gate and warm up on the straight path',
+        'Pick up pace heading south past the central pond',
+        'Turn east along the sports field perimeter',
+        'Push through the northern loop at brisk tempo',
+        'Cool down on the return path to the north entrance',
       ],
     },
   ],
   focus: [
     {
       id: 'f1',
-      name: 'Quiet Grid Route',
-      distanceKm: 2.9,
-      durationMin: 30,
+      name: 'Oude Haven Heritage Walk',
+      destination: 'Maritime Museum',
+      distanceKm: 2.0,
+      durationMin: 26,
       difficulty: 'Easy',
-      start: 'Library Corner',
-      waypoints: [
-        'Follow the low-traffic side streets',
-        'Turn left at the old clock tower',
-        'Finish at the square garden path',
+      start: 'Blaak Station',
+      instructions: [
+        'Walk south from Blaak past the Cube Houses',
+        'Follow the Oude Haven quay along the old harbour',
+        'Continue west along Wijnhaven toward Leuvehaven',
+        'Turn south to the Maritime Museum entrance',
+        'Return east via Wijnstraat back to Blaak',
       ],
     },
     {
       id: 'f2',
-      name: 'Canal Focus Track',
-      distanceKm: 5,
-      durationMin: 52,
-      difficulty: 'Moderate',
-      start: 'Canal South Dock',
-      waypoints: [
-        'Walk straight along the canal edge',
-        'Cross at the second footbridge',
-        'Return on the west-side path',
+      name: 'Museumpark Cultural Circuit',
+      destination: 'Coolsingel / Stadhuis',
+      distanceKm: 2.5,
+      durationMin: 32,
+      difficulty: 'Easy',
+      start: 'Museumpark entrance',
+      instructions: [
+        'Walk north through Museumpark past the Kunsthal',
+        'Turn right onto Witte de Withstraat',
+        'Continue north toward Coolsingel',
+        'Walk along Coolsingel past the Stadhuis',
+        'Return south through the side streets to Museumpark',
       ],
     },
   ],
@@ -120,40 +138,119 @@ const ROUTES_BY_TYPE = {
 
 const ROUTE_PATHS = {
   m1: [
-    { latitude: 52.0908, longitude: 5.1214 },
-    { latitude: 52.0916, longitude: 5.1231 },
-    { latitude: 52.093, longitude: 5.1242 },
-    { latitude: 52.094, longitude: 5.1224 },
+    { latitude: 51.90555, longitude: 4.46620 },
+    { latitude: 51.90500, longitude: 4.46650 },
+    { latitude: 51.90440, longitude: 4.46630 },
+    { latitude: 51.90380, longitude: 4.46680 },
+    { latitude: 51.90340, longitude: 4.46750 },
+    { latitude: 51.90300, longitude: 4.46830 },
+    { latitude: 51.90280, longitude: 4.46920 },
+    { latitude: 51.90310, longitude: 4.47000 },
+    { latitude: 51.90370, longitude: 4.47050 },
+    { latitude: 51.90430, longitude: 4.47020 },
+    { latitude: 51.90480, longitude: 4.46950 },
+    { latitude: 51.90520, longitude: 4.46870 },
+    { latitude: 51.90540, longitude: 4.46780 },
+    { latitude: 51.90555, longitude: 4.46700 },
+    { latitude: 51.90555, longitude: 4.46620 },
   ],
   m2: [
-    { latitude: 52.0897, longitude: 5.1168 },
-    { latitude: 52.0907, longitude: 5.1184 },
-    { latitude: 52.0919, longitude: 5.1198 },
-    { latitude: 52.0932, longitude: 5.1189 },
+    { latitude: 51.92300, longitude: 4.50800 },
+    { latitude: 51.92250, longitude: 4.50850 },
+    { latitude: 51.92180, longitude: 4.50900 },
+    { latitude: 51.92100, longitude: 4.50950 },
+    { latitude: 51.92020, longitude: 4.51000 },
+    { latitude: 51.91950, longitude: 4.51050 },
+    { latitude: 51.91900, longitude: 4.51120 },
+    { latitude: 51.91880, longitude: 4.51220 },
+    { latitude: 51.91900, longitude: 4.51320 },
+    { latitude: 51.91950, longitude: 4.51380 },
+    { latitude: 51.92020, longitude: 4.51350 },
+    { latitude: 51.92100, longitude: 4.51280 },
+    { latitude: 51.92180, longitude: 4.51200 },
+    { latitude: 51.92250, longitude: 4.51100 },
+    { latitude: 51.92280, longitude: 4.51000 },
+    { latitude: 51.92300, longitude: 4.50900 },
+    { latitude: 51.92300, longitude: 4.50800 },
   ],
   e1: [
-    { latitude: 52.0845, longitude: 5.1241 },
-    { latitude: 52.0857, longitude: 5.1264 },
-    { latitude: 52.0879, longitude: 5.1273 },
-    { latitude: 52.0894, longitude: 5.1255 },
+    { latitude: 51.90700, longitude: 4.48800 },
+    { latitude: 51.90750, longitude: 4.48850 },
+    { latitude: 51.90850, longitude: 4.48870 },
+    { latitude: 51.90950, longitude: 4.48880 },
+    { latitude: 51.91050, longitude: 4.48870 },
+    { latitude: 51.91120, longitude: 4.48820 },
+    { latitude: 51.91180, longitude: 4.48750 },
+    { latitude: 51.91220, longitude: 4.48650 },
+    { latitude: 51.91260, longitude: 4.48550 },
+    { latitude: 51.91280, longitude: 4.48450 },
+    { latitude: 51.91250, longitude: 4.48350 },
+    { latitude: 51.91180, longitude: 4.48300 },
+    { latitude: 51.91100, longitude: 4.48350 },
+    { latitude: 51.91020, longitude: 4.48420 },
+    { latitude: 51.90950, longitude: 4.48500 },
+    { latitude: 51.90880, longitude: 4.48580 },
+    { latitude: 51.90820, longitude: 4.48660 },
+    { latitude: 51.90760, longitude: 4.48730 },
+    { latitude: 51.90700, longitude: 4.48800 },
   ],
   e2: [
-    { latitude: 52.0952, longitude: 5.1102 },
-    { latitude: 52.0963, longitude: 5.1119 },
-    { latitude: 52.0978, longitude: 5.1133 },
-    { latitude: 52.0991, longitude: 5.1116 },
+    { latitude: 51.89200, longitude: 4.48400 },
+    { latitude: 51.89150, longitude: 4.48450 },
+    { latitude: 51.89080, longitude: 4.48500 },
+    { latitude: 51.89000, longitude: 4.48550 },
+    { latitude: 51.88920, longitude: 4.48600 },
+    { latitude: 51.88850, longitude: 4.48650 },
+    { latitude: 51.88800, longitude: 4.48720 },
+    { latitude: 51.88780, longitude: 4.48820 },
+    { latitude: 51.88800, longitude: 4.48920 },
+    { latitude: 51.88870, longitude: 4.48980 },
+    { latitude: 51.88950, longitude: 4.49020 },
+    { latitude: 51.89030, longitude: 4.48980 },
+    { latitude: 51.89100, longitude: 4.48920 },
+    { latitude: 51.89150, longitude: 4.48850 },
+    { latitude: 51.89180, longitude: 4.48750 },
+    { latitude: 51.89200, longitude: 4.48650 },
+    { latitude: 51.89200, longitude: 4.48500 },
+    { latitude: 51.89200, longitude: 4.48400 },
   ],
   f1: [
-    { latitude: 52.0811, longitude: 5.1195 },
-    { latitude: 52.0826, longitude: 5.1204 },
-    { latitude: 52.0837, longitude: 5.1222 },
-    { latitude: 52.0849, longitude: 5.1211 },
+    { latitude: 51.92000, longitude: 4.49000 },
+    { latitude: 51.91950, longitude: 4.48950 },
+    { latitude: 51.91900, longitude: 4.48900 },
+    { latitude: 51.91850, longitude: 4.48850 },
+    { latitude: 51.91800, longitude: 4.48800 },
+    { latitude: 51.91750, longitude: 4.48750 },
+    { latitude: 51.91700, longitude: 4.48700 },
+    { latitude: 51.91680, longitude: 4.48600 },
+    { latitude: 51.91720, longitude: 4.48520 },
+    { latitude: 51.91780, longitude: 4.48480 },
+    { latitude: 51.91840, longitude: 4.48520 },
+    { latitude: 51.91880, longitude: 4.48600 },
+    { latitude: 51.91920, longitude: 4.48700 },
+    { latitude: 51.91950, longitude: 4.48800 },
+    { latitude: 51.91980, longitude: 4.48900 },
+    { latitude: 51.92000, longitude: 4.49000 },
   ],
   f2: [
-    { latitude: 52.0789, longitude: 5.1141 },
-    { latitude: 52.0803, longitude: 5.1168 },
-    { latitude: 52.0824, longitude: 5.1179 },
-    { latitude: 52.0843, longitude: 5.1159 },
+    { latitude: 51.91450, longitude: 4.47400 },
+    { latitude: 51.91500, longitude: 4.47500 },
+    { latitude: 51.91550, longitude: 4.47600 },
+    { latitude: 51.91620, longitude: 4.47700 },
+    { latitude: 51.91700, longitude: 4.47800 },
+    { latitude: 51.91780, longitude: 4.47850 },
+    { latitude: 51.91860, longitude: 4.47900 },
+    { latitude: 51.91940, longitude: 4.47950 },
+    { latitude: 51.92020, longitude: 4.47920 },
+    { latitude: 51.92080, longitude: 4.47850 },
+    { latitude: 51.92060, longitude: 4.47750 },
+    { latitude: 51.91980, longitude: 4.47680 },
+    { latitude: 51.91900, longitude: 4.47620 },
+    { latitude: 51.91800, longitude: 4.47560 },
+    { latitude: 51.91700, longitude: 4.47500 },
+    { latitude: 51.91600, longitude: 4.47450 },
+    { latitude: 51.91500, longitude: 4.47420 },
+    { latitude: 51.91450, longitude: 4.47400 },
   ],
 };
 
@@ -167,7 +264,6 @@ const WalkingRoutesScreen = ({ navigation }) => {
   const [step, setStep] = useState('types');
   const [selectedType, setSelectedType] = useState(null);
   const [selectedRoute, setSelectedRoute] = useState(null);
-  const [gpsStep, setGpsStep] = useState(0);
 
   const routeOptions = useMemo(() => {
     if (!selectedType) {
@@ -211,19 +307,10 @@ map.fitBounds(coords,{padding:[30,30]});
 
   const startRoute = route => {
     setSelectedRoute(route);
-    setGpsStep(0);
     setStep('gps');
   };
 
-  const nextDirection = () => {
-    if (!selectedRoute) {
-      return;
-    }
-    const maxStep = selectedRoute.waypoints.length - 1;
-    setGpsStep(prev => (prev >= maxStep ? prev : prev + 1));
-  };
-
-  const currentMusicTrack = NAV_MUSIC_TRACKS[gpsStep % NAV_MUSIC_TRACKS.length] || NAV_MUSIC_TRACKS[0];
+  const currentMusicTrack = NAV_MUSIC_TRACKS[0];
 
   const openMusicPlayerFromWalk = () => {
     navigation?.navigate('MusicPlayer', {
@@ -252,7 +339,7 @@ map.fitBounds(coords,{padding:[30,30]});
             {leafletHtml ? (
               <WebView
                 testID="walking-route-map"
-                accessibilityLabel="Prototype route map"
+                accessibilityLabel="Route map"
                 originWhitelist={['*']}
                 source={{ html: leafletHtml }}
                 style={styles.mapCanvas}
@@ -267,29 +354,21 @@ map.fitBounds(coords,{padding:[30,30]});
               <Text style={styles.gpsModeSubtitle}>{selectedRoute.name}</Text>
 
               <View style={styles.routeSummaryRow}>
-                <Text style={styles.routeSummaryTitle}>Walking to: Kooistee</Text>
-                <Text style={styles.routeSummaryMeta}>0.8km / {selectedRoute.distanceKm}km</Text>
+                <Text style={styles.routeSummaryTitle}>Walking to: {selectedRoute.destination}</Text>
+                <Text style={styles.routeSummaryMeta}>{selectedRoute.distanceKm} km · ~{selectedRoute.durationMin} min</Text>
               </View>
 
               <View style={styles.instructionCard}>
-                <Ionicons name="arrow-back" size={18} color="#1f2937" />
+                <Ionicons name="navigate" size={18} color="#2d6a4f" />
                 <View style={styles.instructionTextWrap}>
-                  <Text style={styles.gpsInstructionLabel}>Next instruction</Text>
-                  <Text style={styles.gpsInstruction}>In 200 meters - Go Left</Text>
+                  <Text style={styles.gpsInstructionLabel}>Route directions</Text>
+                  {selectedRoute.instructions.map((instr, idx) => (
+                    <Text key={idx} style={styles.gpsInstruction}>
+                      {idx + 1}. {instr}
+                    </Text>
+                  ))}
                 </View>
               </View>
-
-              <Text style={styles.gpsProgress}>
-                Step {gpsStep + 1} of {selectedRoute.waypoints.length}
-              </Text>
-
-              <TouchableOpacity
-                style={styles.advanceButton}
-                accessibilityRole="button"
-                onPress={nextDirection}
-              >
-                <Text style={styles.startButtonText}>Advance to next waypoint</Text>
-              </TouchableOpacity>
             </View>
 
             <TouchableOpacity
@@ -610,9 +689,10 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   gpsInstruction: {
-    fontSize: 20,
+    fontSize: 13,
     color: '#1f2937',
-    fontWeight: '700',
+    fontWeight: '600',
+    lineHeight: 20,
   },
   gpsProgress: {
     fontSize: 12,
