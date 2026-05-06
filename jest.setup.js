@@ -9,6 +9,33 @@ jest.mock('@expo/vector-icons', () => ({
   },
 }));
 
+jest.mock('./src/context/ThemeContext', () => {
+  const actual = jest.requireActual('./src/context/ThemeContext');
+  return {
+    ...actual,
+    useTheme: () => ({
+      colors: actual.lightColors,
+      isDark: false,
+      toggleTheme: jest.fn(),
+    }),
+    ThemeProvider: ({ children }) => children,
+  };
+});
+
+jest.mock('./src/services/notificationService', () => ({
+  notificationService: {
+    setListener: jest.fn(),
+    removeListener: jest.fn(),
+    sendTestNotification: jest.fn(),
+    scheduleReminder: jest.fn(),
+    cancelReminder: jest.fn(),
+    syncReminders: jest.fn(),
+    cancelAllReminders: jest.fn(),
+    _fire: jest.fn(),
+  },
+  REMINDER_CONFIG: {},
+}));
+
 jest.mock('react-native-webview', () => {
   const React = require('react');
   const { View } = require('react-native');

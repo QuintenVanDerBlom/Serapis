@@ -10,10 +10,12 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
+import { authService } from '../services/authService';
 
 const RegisterScreen = ({ navigation }) => {
+  const { colors } = useTheme();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -35,14 +37,29 @@ const RegisterScreen = ({ navigation }) => {
     return '';
   };
 
+  const validateUsername = (rawUsername) => {
+    const normalized = rawUsername.trim().toLowerCase();
+
+    if (!normalized) {
+      return 'Please enter a username';
+    }
+
+    if (!/^[a-z0-9._-]{3,30}$/.test(normalized)) {
+      return 'Username must be 3-30 chars and can only contain letters, numbers, dot (.), underscore (_), or dash (-).';
+    }
+
+    return '';
+  };
+
   const handlePasswordChange = (text) => {
     setPassword(text);
     setPasswordError(validatePassword(text));
   };
 
   const handleRegister = async () => {
-    if (!username.trim()) {
-      Alert.alert('Error', 'Please enter a username');
+    const usernameError = validateUsername(username);
+    if (usernameError) {
+      Alert.alert('Error', usernameError);
       return;
     }
 
@@ -63,26 +80,30 @@ const RegisterScreen = ({ navigation }) => {
     }
 
     try {
-      const existingUsers = await AsyncStorage.getItem('users');
-      const users = existingUsers ? JSON.parse(existingUsers) : [];
-      
-      if (users.find(user => user.username === username)) {
-        Alert.alert('Error', 'Username already exists');
-        return;
-      }
-
-      const newUser = {
-        id: Date.now().toString(),
+      const { data, error } = await authService.registerWithUsername({
         username,
         password,
-        createdAt: new Date().toISOString(),
-      };
+      });
 
-      users.push(newUser);
-      await AsyncStorage.setItem('users', JSON.stringify(users));
+      if (error) {
+        const message = error.message?.toLowerCase() || '';
+
+        if (message.includes('not configured')) {
+          Alert.alert('Error', 'Supabase is not configured. Check EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY.');
+          return;
+        }
+
+        if (message.includes('user already registered') || message.includes('already been registered')) {
+          Alert.alert('Error', 'Username already exists');
+          return;
+        }
+
+        Alert.alert('Error', error.message || 'Failed to create account');
+        return;
+      }
       
       Alert.alert('Success', 'Account created successfully!', [
-        { text: 'OK', onPress: () => navigation.navigate('Login') }
+        { text: 'OK', onPress: () => navigation.navigate(data?.session ? 'Home' : 'Login') }
       ]);
     } catch (error) {
       Alert.alert('Error', 'Failed to create account');
@@ -92,36 +113,36 @@ const RegisterScreen = ({ navigation }) => {
 
   return (
     <KeyboardAvoidingView 
-      style={styles.container} 
+      style={[styles.container, { backgroundColor: colors.bg }]} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.content}>
-          <Text style={styles.brand}>Serapis</Text>
-          <Text style={styles.title}>Sign up</Text>
-          <Text style={styles.subtitle}>Create a free account.</Text>
+          <Text style={[styles.brand, { color: colors.accent }]}>Serapis</Text>
+          <Text style={[styles.title, { color: colors.heading }]}>Sign up</Text>
+          <Text style={[styles.subtitle, { color: colors.muted }]}>Create a free account.</Text>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>username</Text>
+            <Text style={[styles.inputLabel, { color: colors.accent }]}>username</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
               value={username}
               onChangeText={setUsername}
               placeholder="guest_user"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.placeholder}
               autoCapitalize="none"
             />
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>password</Text>
-            <View style={[styles.passwordContainer, passwordError ? styles.inputError : null]}>
+            <Text style={[styles.inputLabel, { color: colors.accent }]}>password</Text>
+            <View style={[styles.passwordContainer, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }, passwordError ? { borderColor: colors.errorInput, borderWidth: 2, backgroundColor: colors.errorInputBg } : null]}>
               <TextInput
-                style={styles.passwordInput}
+                style={[styles.passwordInput, { color: colors.text }]}
                 value={password}
                 onChangeText={handlePasswordChange}
                 placeholder="Enter password"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
                 secureTextEntry={!showPassword}
               />
               <TouchableOpacity
@@ -133,24 +154,24 @@ const RegisterScreen = ({ navigation }) => {
                 <Ionicons
                   name={showPassword ? 'eye-outline' : 'eye-off-outline'}
                   size={20}
-                  color="#52b788"
+                  color={colors.accentLight}
                 />
               </TouchableOpacity>
             </View>
             {passwordError ? (
-              <Text style={styles.errorText}>{passwordError}</Text>
+              <Text style={[styles.errorText, { color: colors.errorInput }]}>{passwordError}</Text>
             ) : null}
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>confirm password</Text>
-            <View style={styles.passwordContainer}>
+            <Text style={[styles.inputLabel, { color: colors.accent }]}>confirm password</Text>
+            <View style={[styles.passwordContainer, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
               <TextInput
-                style={styles.passwordInput}
+                style={[styles.passwordInput, { color: colors.text }]}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 placeholder="Confirm password"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
                 secureTextEntry={!showPassword}
               />
               <TouchableOpacity
@@ -162,7 +183,7 @@ const RegisterScreen = ({ navigation }) => {
                 <Ionicons
                   name={showPassword ? 'eye-outline' : 'eye-off-outline'}
                   size={20}
-                  color="#52b788"
+                  color={colors.accentLight}
                 />
               </TouchableOpacity>
             </View>
@@ -176,21 +197,22 @@ const RegisterScreen = ({ navigation }) => {
               accessibilityState={{ checked: acceptedTerms }}
               accessibilityLabel="Accept Terms & Conditions"
             >
-              <View style={[styles.checkboxInner, acceptedTerms && styles.checkboxChecked]}>
+              <View style={[styles.checkboxInner, { borderColor: colors.inputBorder, backgroundColor: colors.inputBg }, acceptedTerms && { backgroundColor: colors.accentLight, borderColor: colors.accentLight }]}>
                 {acceptedTerms && <Text style={styles.checkmark}>×</Text>}
               </View>
             </TouchableOpacity>
-            <Text style={styles.checkboxText}>
+            <Text style={[styles.checkboxText, { color: colors.secondary }]}>
               By checking this box, you agree to our{' '}
-              <Text style={styles.link}>Terms & Conditions</Text>
+              <Text style={[styles.link, { color: colors.link }]}>Terms & Conditions</Text>
             </Text>
           </View>
 
           <TouchableOpacity
             style={[
               styles.submitButton,
+              { backgroundColor: colors.accentLight },
               (!username || !password || !confirmPassword || !acceptedTerms || !!passwordError) && 
-              styles.submitButtonDisabled
+              { backgroundColor: colors.buttonDisabled, shadowOpacity: 0, elevation: 0 }
             ]}
             onPress={handleRegister}
             disabled={!username || !password || !confirmPassword || !acceptedTerms || !!passwordError}
@@ -202,8 +224,8 @@ const RegisterScreen = ({ navigation }) => {
             style={styles.linkContainer}
             onPress={() => navigation.navigate('Login')}
           >
-            <Text style={styles.linkText}>
-              Already have an account? <Text style={styles.link}>Log in here</Text>
+            <Text style={[styles.linkText, { color: colors.secondary }]}>
+              Already have an account? <Text style={[styles.link, { color: colors.link }]}>Log in here</Text>
             </Text>
           </TouchableOpacity>
         </View>

@@ -1,7 +1,13 @@
 import React from 'react';
 import { render, waitFor } from '@testing-library/react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppNavigator from '../navigation/AppNavigator';
+import { authService } from '../services/authService';
+
+jest.mock('../services/authService', () => ({
+  authService: {
+    getSession: jest.fn(),
+  },
+}));
 
 jest.mock('@react-navigation/native', () => ({
   NavigationContainer: ({ children }) => <>{children}</>,
@@ -52,18 +58,6 @@ jest.mock('../screens/HomeScreen', () => {
   return () => React.createElement(Text, null, 'Home Screen');
 });
 
-jest.mock('../screens/MusicScreen', () => {
-  const React = require('react');
-  const { Text } = require('react-native');
-  return () => React.createElement(Text, null, 'Music Screen');
-});
-
-jest.mock('../screens/MusicPlayerScreen', () => {
-  const React = require('react');
-  const { Text } = require('react-native');
-  return () => React.createElement(Text, null, 'Music Player Screen');
-});
-
 jest.mock('../screens/WellnessScreen', () => {
   const React = require('react');
   const { Text } = require('react-native');
@@ -82,7 +76,9 @@ describe('AppNavigator', () => {
   });
 
   it('starts at Home when currentUser exists', async () => {
-    AsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify({ username: 'alice' }));
+    authService.getSession.mockResolvedValueOnce({
+      data: { session: { user: { id: 'u1' } } },
+    });
 
     const { getByTestId, getByText } = render(<AppNavigator />);
 
@@ -94,7 +90,7 @@ describe('AppNavigator', () => {
   });
 
   it('starts at Login when currentUser is missing', async () => {
-    AsyncStorage.getItem.mockResolvedValueOnce(null);
+    authService.getSession.mockResolvedValueOnce({ data: { session: null } });
 
     const { getByTestId, getByText } = render(<AppNavigator />);
 

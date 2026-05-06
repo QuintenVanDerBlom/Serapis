@@ -14,8 +14,8 @@ describe('ProfileScreen', () => {
 
     expect(getByText('Serapis User')).toBeOnTheScreen();
     expect(getByText('user@serapis.app')).toBeOnTheScreen();
-    expect(getByText('34')).toBeOnTheScreen();
-    expect(getByText('Total Walks')).toBeOnTheScreen();
+    expect(getByText('4,260')).toBeOnTheScreen();
+    expect(getByText('Move Points')).toBeOnTheScreen();
   });
 
   it('renders settings items', () => {
@@ -24,7 +24,7 @@ describe('ProfileScreen', () => {
 
     expect(getByLabelText('Notifications')).toBeOnTheScreen();
     expect(getByLabelText('Privacy')).toBeOnTheScreen();
-    expect(getByLabelText('Appearance')).toBeOnTheScreen();
+    expect(getByLabelText('Toggle dark mode')).toBeOnTheScreen();
     expect(getByLabelText('About Serapis')).toBeOnTheScreen();
   });
 

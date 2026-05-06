@@ -10,10 +10,12 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
+import { authService } from '../services/authService';
 
 const LoginScreen = ({ navigation }) => {
+  const { colors } = useTheme();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -33,20 +35,27 @@ const LoginScreen = ({ navigation }) => {
     setIsLoading(true);
 
     try {
-      const existingUsers = await AsyncStorage.getItem('users');
-      const users = existingUsers ? JSON.parse(existingUsers) : [];
-      
-      const user = users.find(u => u.username === username && u.password === password);
+      const { error } = await authService.loginWithUsername({
+        username,
+        password,
+      });
 
-      if (user) {
-        await AsyncStorage.setItem('currentUser', JSON.stringify(user));
+      if (!error) {
         Alert.alert('Success', 'Login successful!', [
           { text: 'OK', onPress: () => {
             navigation.navigate('Home');
           }}
         ]);
       } else {
-        Alert.alert('Error', 'Invalid username or password');
+        const message = error.message?.toLowerCase() || '';
+
+        if (message.includes('not configured')) {
+          Alert.alert('Error', 'Supabase is not configured. Check EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY.');
+        } else if (message.includes('email not confirmed')) {
+          Alert.alert('Error', 'Account not confirmed. Disable email confirmation in Supabase Auth settings for username-only login.');
+        } else {
+          Alert.alert('Error', 'Invalid username or password');
+        }
       }
     } catch (error) {
       Alert.alert('Error', 'Login failed. Please try again.');
@@ -66,37 +75,37 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <KeyboardAvoidingView 
-      style={styles.container} 
+      style={[styles.container, { backgroundColor: colors.bg }]} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.content}>
-          <Text style={styles.brand}>Serapis</Text>
-          <Text style={styles.title}>Welcome back!</Text>
-          <Text style={styles.subtitle}>Please enter your login details below.</Text>
+          <Text style={[styles.brand, { color: colors.accent }]}>Serapis</Text>
+          <Text style={[styles.title, { color: colors.heading }]}>Welcome back!</Text>
+          <Text style={[styles.subtitle, { color: colors.muted }]}>Please enter your login details below.</Text>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>username</Text>
+            <Text style={[styles.inputLabel, { color: colors.accent }]}>username</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
               value={username}
               onChangeText={setUsername}
               placeholder="guest_user"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.placeholder}
               autoCapitalize="none"
               autoCorrect={false}
             />
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>password</Text>
-            <View style={styles.passwordContainer}>
+            <Text style={[styles.inputLabel, { color: colors.accent }]}>password</Text>
+            <View style={[styles.passwordContainer, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
               <TextInput
-                style={styles.passwordInput}
+                style={[styles.passwordInput, { color: colors.text }]}
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Enter password"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
                 secureTextEntry={!showPassword}
                 autoCorrect={false}
               />
@@ -109,7 +118,7 @@ const LoginScreen = ({ navigation }) => {
                 <Ionicons
                   name={showPassword ? 'eye-outline' : 'eye-off-outline'}
                   size={20}
-                  color="#52b788"
+                  color={colors.accentLight}
                 />
               </TouchableOpacity>
             </View>
@@ -119,14 +128,15 @@ const LoginScreen = ({ navigation }) => {
             style={styles.forgotPasswordContainer}
             onPress={handleForgotPassword}
           >
-            <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+            <Text style={[styles.forgotPasswordText, { color: colors.link }]}>Forgot password?</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[
               styles.submitButton,
-              (!username || !password) && styles.submitButtonDisabled,
-              isLoading && styles.submitButtonLoading
+              { backgroundColor: colors.accentLight },
+              (!username || !password) && { backgroundColor: colors.buttonDisabled, shadowOpacity: 0, elevation: 0 },
+              isLoading && { backgroundColor: colors.buttonLoading }
             ]}
             onPress={handleLogin}
             disabled={!username || !password || isLoading}
@@ -140,8 +150,8 @@ const LoginScreen = ({ navigation }) => {
             style={styles.linkContainer}
             onPress={() => navigation.navigate('Register')}
           >
-            <Text style={styles.linkText}>
-              Don't have an account? <Text style={styles.link}>Sign up for free.</Text>
+            <Text style={[styles.linkText, { color: colors.secondary }]}>
+              Don't have an account? <Text style={[styles.link, { color: colors.link }]}>Sign up for free.</Text>
             </Text>
           </TouchableOpacity>
         </View>

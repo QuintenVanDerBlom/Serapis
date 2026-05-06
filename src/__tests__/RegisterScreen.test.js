@@ -1,10 +1,28 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import RegisterScreen from '../screens/RegisterScreen';
+import { authService } from '../services/authService';
+
+jest.mock('../services/authService', () => ({
+  authService: {
+    registerWithUsername: jest.fn().mockResolvedValue({
+      data: { session: { user: { id: 'u1' } } },
+      error: null,
+    }),
+  },
+}));
 
 describe('RegisterScreen', () => {
   const createNavigation = () => ({
     navigate: jest.fn(),
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    authService.registerWithUsername.mockResolvedValue({
+      data: { session: { user: { id: 'u1' } } },
+      error: null,
+    });
   });
 
   it('renders the registration form', () => {

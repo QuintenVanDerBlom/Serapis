@@ -1,8 +1,14 @@
 import React from 'react';
 import { Alert } from 'react-native';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import LoginScreen from '../screens/LoginScreen';
+import { authService } from '../services/authService';
+
+jest.mock('../services/authService', () => ({
+  authService: {
+    loginWithUsername: jest.fn(),
+  },
+}));
 
 describe('LoginScreen', () => {
   const createNavigation = () => ({
@@ -27,9 +33,9 @@ describe('LoginScreen', () => {
   it('shows an error when credentials are invalid', async () => {
     const navigation = createNavigation();
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-    AsyncStorage.getItem.mockResolvedValueOnce(
-      JSON.stringify([{ username: 'alice', password: 'secret123!' }])
-    );
+    authService.loginWithUsername.mockResolvedValueOnce({
+      error: { message: 'Invalid login credentials' },
+    });
 
     const { getByPlaceholderText, getByText } = render(
       <LoginScreen navigation={navigation} />
@@ -47,9 +53,7 @@ describe('LoginScreen', () => {
   it('navigates to home after successful login', async () => {
     const navigation = createNavigation();
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-    AsyncStorage.getItem.mockResolvedValueOnce(
-      JSON.stringify([{ username: 'alice', password: 'secret123!' }])
-    );
+    authService.loginWithUsername.mockResolvedValueOnce({ error: null });
 
     const { getByPlaceholderText, getByText } = render(
       <LoginScreen navigation={navigation} />

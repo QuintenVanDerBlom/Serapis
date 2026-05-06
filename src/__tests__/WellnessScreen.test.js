@@ -2,45 +2,67 @@ import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import WellnessScreen from '../screens/WellnessScreen';
 
-jest.mock('react-native-svg', () => {
-  const React = require('react');
-  const { View } = require('react-native');
-  return {
-    __esModule: true,
-    default: props => React.createElement(View, props, props.children),
-    Svg: props => React.createElement(View, props, props.children),
-    Path: props => React.createElement(View, props, props.children),
-    G: props => React.createElement(View, props, props.children),
-  };
-});
+jest.mock('../services/authService', () => ({
+  authService: {
+    getCurrentUser: jest.fn().mockResolvedValue({ data: { user: null } }),
+  },
+}));
+
+jest.mock('../services/wellnessService', () => ({
+  DEFAULT_WELLNESS_STATE: {
+    points: 840,
+    streakDays: 6,
+    completedMissions: [],
+    reminders: [
+      { key: 'hourly', label: 'Hourly movement reminder', enabled: true },
+      { key: 'water', label: 'Hydration reminder', enabled: true },
+      { key: 'posture', label: 'Posture check reminder', enabled: false },
+    ],
+  },
+  wellnessService: {
+    getWellnessState: jest.fn(),
+    saveWellnessState: jest.fn(),
+  },
+}));
 
 describe('WellnessScreen', () => {
   const createNavigation = () => ({
     goBack: jest.fn(),
   });
 
-  it('renders mood buttons and chart section', () => {
+  it('renders movement missions and reminders sections', () => {
     const navigation = createNavigation();
     const { getByText, getByLabelText } = render(
       <WellnessScreen navigation={navigation} />
     );
 
-    expect(getByText('How are you feeling?')).toBeOnTheScreen();
-    expect(getByText('Mood Insight')).toBeOnTheScreen();
-    expect(getByLabelText('Log mood Happy')).toBeOnTheScreen();
-    expect(getByLabelText('Log mood Calm')).toBeOnTheScreen();
-    expect(getByLabelText('Log mood Stressed')).toBeOnTheScreen();
+    expect(getByText('Daily Missions')).toBeOnTheScreen();
+    expect(getByText('Reminder Settings')).toBeOnTheScreen();
+    expect(getByLabelText('Toggle mission 3-minute stretch')).toBeOnTheScreen();
+    expect(getByLabelText('Toggle Hourly movement reminder')).toBeOnTheScreen();
   });
 
-  it('logs a mood entry when a mood button is pressed', () => {
+  it('updates mission progress when mission is toggled', () => {
     const navigation = createNavigation();
     const { getByLabelText, getByText } = render(
       <WellnessScreen navigation={navigation} />
     );
 
-    fireEvent.press(getByLabelText('Log mood Happy'));
+    fireEvent.press(getByLabelText('Toggle mission 3-minute stretch'));
 
-    expect(getByText(/11 logged entries/)).toBeOnTheScreen();
+    expect(getByText('1/4 missions done')).toBeOnTheScreen();
+    expect(getByText('25%')).toBeOnTheScreen();
+  });
+
+  it('increases streak when complete day button is pressed', () => {
+    const navigation = createNavigation();
+    const { getByLabelText, getByText } = render(
+      <WellnessScreen navigation={navigation} />
+    );
+
+    fireEvent.press(getByLabelText('Complete day and extend streak'));
+
+    expect(getByText('7 days')).toBeOnTheScreen();
   });
 
   it('navigates back when back button is pressed', () => {

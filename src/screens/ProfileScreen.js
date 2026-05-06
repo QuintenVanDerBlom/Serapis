@@ -5,29 +5,32 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from '../context/ThemeContext';
+import { authService } from '../services/authService';
 
 const PROFILE_STATS = [
-  { label: 'Total Walks', value: '34' },
-  { label: 'Total Listening', value: '18h' },
-  { label: 'Mood Entries', value: '62' },
-  { label: 'Streak', value: '7 days' },
+  { label: 'Move Points', value: '4,260' },
+  { label: 'Missions Done', value: '98' },
+  { label: 'Reminders Kept', value: '211' },
+  { label: 'Best Streak', value: '12 days' },
 ];
 
 const SETTINGS_ITEMS = [
   { key: 'notifications', label: 'Notifications', icon: 'notifications-outline' },
   { key: 'privacy', label: 'Privacy', icon: 'lock-closed-outline' },
-  { key: 'appearance', label: 'Appearance', icon: 'color-palette-outline' },
   { key: 'about', label: 'About Serapis', icon: 'information-circle-outline' },
 ];
 
 const ProfileScreen = ({ navigation }) => {
+  const { colors, isDark, toggleTheme } = useTheme();
+
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem('currentUser');
+      await authService.logout();
       navigation?.reset({ index: 0, routes: [{ name: 'Login' }] });
     } catch {
       // ignore
@@ -35,59 +38,72 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel="Back to home"
           onPress={() => navigation?.goBack()}
         >
-          <Ionicons name="arrow-back" size={22} color="#1b5e3f" />
+          <Ionicons name="arrow-back" size={22} color={colors.heading} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={[styles.headerTitle, { color: colors.heading }]}>Profile</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.avatarSection}>
-          <View style={styles.avatarCircle}>
-            <Ionicons name="person" size={40} color="#52b788" />
+          <View style={[styles.avatarCircle, { backgroundColor: colors.accentBg }]}>
+            <Ionicons name="person" size={40} color={colors.accentLight} />
           </View>
-          <Text style={styles.userName}>Serapis User</Text>
-          <Text style={styles.userEmail}>user@serapis.app</Text>
+          <Text style={[styles.userName, { color: colors.text }]}>Serapis User</Text>
+          <Text style={[styles.userEmail, { color: colors.secondary }]}>user@serapis.app</Text>
         </View>
 
         <View style={styles.statsRow}>
           {PROFILE_STATS.map(stat => (
-            <View key={stat.label} style={styles.statCard}>
-              <Text style={styles.statValue}>{stat.value}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
+            <View key={stat.label} style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={[styles.statValue, { color: colors.text }]}>{stat.value}</Text>
+              <Text style={[styles.statLabel, { color: colors.secondary }]}>{stat.label}</Text>
             </View>
           ))}
         </View>
 
-        <Text style={styles.sectionTitle}>Settings</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
+
+        <View style={[styles.settingRow, { backgroundColor: colors.surfaceAlt }]}>
+          <Ionicons name="moon-outline" size={20} color={colors.accent} />
+          <Text style={[styles.settingLabel, { color: colors.text }]}>Dark Mode</Text>
+          <Switch
+            value={isDark}
+            onValueChange={toggleTheme}
+            trackColor={{ false: colors.border, true: colors.accentLight }}
+            thumbColor={colors.surface}
+            accessibilityLabel="Toggle dark mode"
+          />
+        </View>
+
         {SETTINGS_ITEMS.map(item => (
           <TouchableOpacity
             key={item.key}
-            style={styles.settingRow}
+            style={[styles.settingRow, { backgroundColor: colors.surfaceAlt }]}
             accessibilityRole="button"
             accessibilityLabel={item.label}
           >
-            <Ionicons name={item.icon} size={20} color="#2d6a4f" />
-            <Text style={styles.settingLabel}>{item.label}</Text>
-            <Ionicons name="chevron-forward" size={16} color="#95d5b2" />
+            <Ionicons name={item.icon} size={20} color={colors.accent} />
+            <Text style={[styles.settingLabel, { color: colors.text }]}>{item.label}</Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.borderStrong} />
           </TouchableOpacity>
         ))}
 
         <TouchableOpacity
-          style={styles.logoutButton}
+          style={[styles.logoutButton, { backgroundColor: colors.logoutBg, borderColor: colors.logoutBorder }]}
           accessibilityRole="button"
           accessibilityLabel="Log out"
           onPress={handleLogout}
         >
-          <Ionicons name="log-out-outline" size={18} color="#e76f51" />
-          <Text style={styles.logoutText}>Log out</Text>
+          <Ionicons name="log-out-outline" size={18} color={colors.error} />
+          <Text style={[styles.logoutText, { color: colors.error }]}>Log out</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

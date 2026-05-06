@@ -1,177 +1,227 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Path, G } from 'react-native-svg';
+import { useTheme } from '../context/ThemeContext';
+import { authService } from '../services/authService';
+import { DEFAULT_WELLNESS_STATE, wellnessService } from '../services/wellnessService';
+import { notificationService } from '../services/notificationService';
 
-const MOODS = [
-  { key: 'happy', label: 'Happy', icon: 'happy-outline', color: '#52b788' },
-  { key: 'calm', label: 'Calm', icon: 'leaf-outline', color: '#40916c' },
-  { key: 'stressed', label: 'Stressed', icon: 'thunderstorm-outline', color: '#e76f51' },
-  { key: 'sad', label: 'Sad', icon: 'rainy-outline', color: '#457b9d' },
-  { key: 'energetic', label: 'Energetic', icon: 'flash-outline', color: '#e9c46a' },
+const MISSIONS = [
+  { key: 'stretch', title: '3-minute stretch', xp: 60, icon: 'body-outline' },
+  { key: 'steps', title: '800 steps', xp: 120, icon: 'footsteps-outline' },
+  { key: 'water', title: 'Hydrate break', xp: 40, icon: 'water-outline' },
+  { key: 'posture', title: 'Desk posture reset', xp: 50, icon: 'accessibility-outline' },
 ];
-
-const INITIAL_ENTRIES = [
-  { mood: 'happy', date: '2026-04-07' },
-  { mood: 'calm', date: '2026-04-06' },
-  { mood: 'happy', date: '2026-04-05' },
-  { mood: 'stressed', date: '2026-04-04' },
-  { mood: 'calm', date: '2026-04-03' },
-  { mood: 'sad', date: '2026-04-02' },
-  { mood: 'energetic', date: '2026-04-01' },
-  { mood: 'happy', date: '2026-03-31' },
-  { mood: 'calm', date: '2026-03-30' },
-  { mood: 'energetic', date: '2026-03-29' },
-];
-
-const PIE_SIZE = 200;
-const PIE_RADIUS = 90;
-const PIE_CENTER = PIE_SIZE / 2;
-
-const polarToCartesian = (cx, cy, r, angleDeg) => {
-  const rad = ((angleDeg - 90) * Math.PI) / 180;
-  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-};
-
-const buildSlicePath = (cx, cy, r, startAngle, endAngle) => {
-  const start = polarToCartesian(cx, cy, r, endAngle);
-  const end = polarToCartesian(cx, cy, r, startAngle);
-  const largeArc = endAngle - startAngle > 180 ? 1 : 0;
-  return `M ${cx} ${cy} L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 0 ${end.x} ${end.y} Z`;
-};
-
-const PieChart = ({ entries }) => {
-  const counts = {};
-  entries.forEach(e => {
-    counts[e.mood] = (counts[e.mood] || 0) + 1;
-  });
-
-  const total = entries.length;
-  if (total === 0) return null;
-
-  const slices = [];
-  let currentAngle = 0;
-
-  MOODS.forEach(mood => {
-    const count = counts[mood.key] || 0;
-    if (count === 0) return;
-    const sliceAngle = (count / total) * 360;
-    slices.push({
-      ...mood,
-      count,
-      startAngle: currentAngle,
-      endAngle: currentAngle + sliceAngle,
-    });
-    currentAngle += sliceAngle;
-  });
-
-  return (
-    <Svg width={PIE_SIZE} height={PIE_SIZE} viewBox={`0 0 ${PIE_SIZE} ${PIE_SIZE}`}>
-      <G>
-        {slices.map(slice => (
-          <Path
-            key={slice.key}
-            d={buildSlicePath(PIE_CENTER, PIE_CENTER, PIE_RADIUS, slice.startAngle, slice.endAngle)}
-            fill={slice.color}
-          />
-        ))}
-      </G>
-    </Svg>
-  );
-};
 
 const WellnessScreen = ({ navigation }) => {
-  const [entries, setEntries] = useState(INITIAL_ENTRIES);
+  const { colors } = useTheme();
+  const [completedMissions, setCompletedMissions] = useState(DEFAULT_WELLNESS_STATE.completedMissions);
+  const [streakDays, setStreakDays] = useState(DEFAULT_WELLNESS_STATE.streakDays);
+  const [points, setPoints] = useState(DEFAULT_WELLNESS_STATE.points);
+  const [reminders, setReminders] = useState(DEFAULT_WELLNESS_STATE.reminders);
+  const [hydrated, setHydrated] = useState(true);
+  const userIdRef = useRef(null);
 
-  const logMood = moodKey => {
-    const today = new Date().toISOString().split('T')[0];
-    setEntries(prev => [{ mood: moodKey, date: today }, ...prev]);
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadWellnessState = async () => {
+      const { data: userData } = await authService.getCurrentUser();
+      const userId = userData?.user?.id;
+
+      if (!userId) {
+        return;
+      }
+
+      userIdRef.current = userId;
+
+      const { data } = await wellnessService.getWellnessState(userId);
+
+      if (!isMounted || !data) return;
+
+      setPoints(data.points);
+      setStreakDays(data.streakDays);
+      setCompletedMissions(data.completedMissions);
+      setReminders(data.reminders);
+      setHydrated(true);
+    };
+
+    loadWellnessState();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated || !userIdRef.current) {
+      return;
+    }
+
+    wellnessService.saveWellnessState(userIdRef.current, {
+      points,
+      streakDays,
+      completedMissions,
+      reminders,
+    });
+  }, [hydrated, points, streakDays, completedMissions, reminders]);
+
+  const toggleMission = mission => {
+    setCompletedMissions(prev => {
+      const alreadyDone = prev.includes(mission.key);
+      if (alreadyDone) {
+        setPoints(current => Math.max(0, current - mission.xp));
+        return prev.filter(key => key !== mission.key);
+      }
+      setPoints(current => current + mission.xp);
+      return [...prev, mission.key];
+    });
   };
 
-  const counts = {};
-  entries.forEach(e => {
-    counts[e.mood] = (counts[e.mood] || 0) + 1;
-  });
+  const toggleReminder = reminderKey => {
+    const updated = reminders.map(reminder =>
+      reminder.key === reminderKey
+        ? { ...reminder, enabled: !reminder.enabled }
+        : reminder
+    );
+    setReminders(updated);
+    notificationService.syncReminders(updated);
+  };
+
+  const handleTestNotification = () => {
+    notificationService.sendTestNotification();
+  };
+
+  const completeDay = () => {
+    setStreakDays(prev => prev + 1);
+  };
+
+  const missionsDone = completedMissions.length;
+  const missionsTotal = MISSIONS.length;
+  const progressPct = Math.round((missionsDone / missionsTotal) * 100);
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]}> 
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel="Back to home"
           onPress={() => navigation?.goBack()}
         >
-          <Ionicons name="arrow-back" size={22} color="#1b5e3f" />
+          <Ionicons name="arrow-back" size={22} color={colors.heading} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Wellness</Text>
+        <Text style={[styles.headerTitle, { color: colors.heading }]}>Wellness</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.sectionTitle}>How are you feeling?</Text>
-        <Text style={styles.sectionSubtitle}>Tap a mood to log it for today.</Text>
-
-        <View style={styles.moodRow}>
-          {MOODS.map(mood => (
-            <TouchableOpacity
-              key={mood.key}
-              style={styles.moodButton}
-              accessibilityRole="button"
-              accessibilityLabel={`Log mood ${mood.label}`}
-              onPress={() => logMood(mood.key)}
-            >
-              <View style={[styles.moodIconWrap, { backgroundColor: mood.color + '22' }]}>
-                <Ionicons name={mood.icon} size={24} color={mood.color} />
-              </View>
-              <Text style={styles.moodLabel}>{mood.label}</Text>
-            </TouchableOpacity>
-          ))}
+        <View style={[styles.heroCard, { backgroundColor: colors.heroBg }]}> 
+          <Text style={[styles.heroEyebrow, { color: colors.heroEyebrow }]}>Movement Engine</Text>
+          <Text style={[styles.heroTitle, { color: colors.heroText }]}>Keep your body in motion</Text>
+          <Text style={[styles.heroSubtitle, { color: colors.heroDesc }]}> 
+            Smart reminders and missions help you move consistently throughout the day.
+          </Text>
         </View>
 
-        <Text style={styles.sectionTitle}>Mood Insight</Text>
-        <Text style={styles.sectionSubtitle}>
-          Based on {entries.length} logged entries.
+        <View style={styles.statsRow}>
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+            <Text style={[styles.statValue, { color: colors.text }]}>{points}</Text>
+            <Text style={[styles.statLabel, { color: colors.secondary }]}>Move points</Text>
+          </View>
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+            <Text style={[styles.statValue, { color: colors.text }]}>{streakDays} days</Text>
+            <Text style={[styles.statLabel, { color: colors.secondary }]}>Active streak</Text>
+          </View>
+        </View>
+
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Daily Missions</Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.secondary }]}> 
+          Complete small movement tasks to earn points.
         </Text>
 
-        <View style={styles.chartCard}>
-          <PieChart entries={entries} />
+        <View style={[styles.progressCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+          <View style={styles.progressRow}>
+            <Text style={[styles.progressTitle, { color: colors.text }]}>Today's completion</Text>
+            <Text style={[styles.progressValue, { color: colors.accent }]}>{progressPct}%</Text>
+          </View>
+          <Text style={[styles.progressSub, { color: colors.secondary }]}>
+            {missionsDone}/{missionsTotal} missions done
+          </Text>
         </View>
 
-        <View style={styles.legendWrap}>
-          {MOODS.map(mood => {
-            const count = counts[mood.key] || 0;
-            if (count === 0) return null;
-            const pct = Math.round((count / entries.length) * 100);
-            return (
-              <View key={mood.key} style={styles.legendRow}>
-                <View style={[styles.legendDot, { backgroundColor: mood.color }]} />
-                <Text style={styles.legendLabel}>{mood.label}</Text>
-                <Text style={styles.legendValue}>
-                  {count} ({pct}%)
-                </Text>
-              </View>
-            );
-          })}
-        </View>
-
-        <Text style={styles.sectionTitle}>Recent Entries</Text>
-        {entries.slice(0, 7).map((entry, idx) => {
-          const moodInfo = MOODS.find(m => m.key === entry.mood) || MOODS[0];
+        {MISSIONS.map(mission => {
+          const done = completedMissions.includes(mission.key);
           return (
-            <View key={`${entry.date}-${idx}`} style={styles.entryRow}>
-              <Ionicons name={moodInfo.icon} size={18} color={moodInfo.color} />
-              <Text style={styles.entryMood}>{moodInfo.label}</Text>
-              <Text style={styles.entryDate}>{entry.date}</Text>
-            </View>
+            <TouchableOpacity
+              key={mission.key}
+              style={[styles.missionRow, { backgroundColor: colors.surfaceAlt }]}
+              accessibilityRole="button"
+              accessibilityLabel={`Toggle mission ${mission.title}`}
+              onPress={() => toggleMission(mission)}
+            >
+              <View style={styles.missionLeft}>
+                <Ionicons name={mission.icon} size={20} color={done ? colors.success : colors.accent} />
+                <Text style={[styles.missionTitle, { color: colors.text }]}>{mission.title}</Text>
+              </View>
+              <View style={styles.missionRight}>
+                <Text style={[styles.missionXp, { color: colors.secondary }]}>+{mission.xp} XP</Text>
+                <Ionicons name={done ? 'checkmark-circle' : 'ellipse-outline'} size={20} color={done ? colors.success : colors.secondary} />
+              </View>
+            </TouchableOpacity>
           );
         })}
+
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Reminder Settings</Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.secondary }]}>Turn reminders on to keep moving during the day.</Text>
+
+        {reminders.map(reminder => (
+          <View key={reminder.key} style={[styles.reminderRow, { backgroundColor: colors.surfaceAlt }]}> 
+            <Text style={[styles.reminderLabel, { color: colors.text }]}>{reminder.label}</Text>
+            <Switch
+              value={reminder.enabled}
+              onValueChange={() => toggleReminder(reminder.key)}
+              trackColor={{ false: colors.border, true: colors.accentLight }}
+              thumbColor={colors.surface}
+              accessibilityLabel={`Toggle ${reminder.label}`}
+            />
+          </View>
+        ))}
+
+        <TouchableOpacity
+          style={[styles.testButton, { backgroundColor: colors.accent }]}
+          accessibilityRole="button"
+          accessibilityLabel="Send test notification"
+          onPress={handleTestNotification}
+        >
+          <Ionicons name="notifications-outline" size={16} color="#fff" />
+          <Text style={styles.testButtonText}>Send test notification</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.streakButton, { backgroundColor: colors.accentLight }]}
+          accessibilityRole="button"
+          accessibilityLabel="Complete day and extend streak"
+          onPress={completeDay}
+        >
+          <Ionicons name="flame-outline" size={16} color="#fff" />
+          <Text style={styles.streakButtonText}>Mark day complete</Text>
+        </TouchableOpacity>
+
+        <View style={[styles.tipCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+          <Text style={[styles.tipTitle, { color: colors.text }]}>Coach Tip</Text>
+          <Text style={[styles.tipText, { color: colors.secondary }]}> 
+            Pair reminders with existing habits: move each time you finish a meeting or task block.
+          </Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -203,90 +253,167 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 32,
   },
+  heroCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 14,
+  },
+  heroEyebrow: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  heroTitle: {
+    fontSize: 23,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  heroSubtitle: {
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 14,
+  },
+  statCard: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 12,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1b4332',
-    marginTop: 16,
+    marginTop: 10,
     marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: 13,
-    color: '#40916c',
     marginBottom: 12,
   },
-  moodRow: {
+  progressCard: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 10,
+  },
+  progressRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  moodButton: {
     alignItems: 'center',
-    gap: 4,
   },
-  moodIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
+  progressTitle: {
+    fontSize: 14,
+    fontWeight: '700',
   },
-  moodLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#1b4332',
+  progressValue: {
+    fontSize: 14,
+    fontWeight: '700',
   },
-  chartCard: {
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#d8f3dc',
-    paddingVertical: 20,
-    marginBottom: 12,
+  progressSub: {
+    fontSize: 12,
+    marginTop: 4,
   },
-  legendWrap: {
-    marginBottom: 12,
-  },
-  legendRow: {
+  missionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
-    gap: 8,
+    justifyContent: 'space-between',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginBottom: 8,
   },
-  legendDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  legendLabel: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1b4332',
-  },
-  legendValue: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#40916c',
-  },
-  entryRow: {
+  missionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#edf7f0',
-  },
-  entryMood: {
     flex: 1,
+  },
+  missionRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  missionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1b4332',
   },
-  entryDate: {
+  missionXp: {
     fontSize: 12,
-    color: '#40916c',
+    fontWeight: '700',
+  },
+  reminderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+  },
+  reminderLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    flex: 1,
+    marginRight: 10,
+  },
+  streakButton: {
+    marginTop: 8,
+    marginBottom: 14,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  streakButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  tipCard: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 12,
+  },
+  tipTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  tipText: {
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  testButton: {
+    marginTop: 4,
+    marginBottom: 10,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  testButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#fff',
   },
 });
 

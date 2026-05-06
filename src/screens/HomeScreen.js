@@ -11,47 +11,48 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../context/ThemeContext';
 
 const MENU_ITEMS = [
   { key: 'home', label: 'Home', icon: 'home-outline' },
-  { key: 'walks', label: 'Walks', icon: 'walk-outline' },
-  { key: 'music', label: 'Music', icon: 'musical-notes-outline' },
+  { key: 'plan', label: 'Move Plan', icon: 'footsteps-outline' },
+  { key: 'challenges', label: 'Challenges', icon: 'trophy-outline' },
   { key: 'wellness', label: 'Wellness', icon: 'leaf-outline' },
   { key: 'profile', label: 'Profile', icon: 'person-outline' },
 ];
 
 const TABS = [
   { key: 'home', label: 'Home', icon: 'home-outline', activeIcon: 'home' },
-  { key: 'add', label: 'Walks', icon: 'walk-outline', activeIcon: 'walk' },
-  { key: 'bookmarks', label: 'Music', icon: 'musical-notes-outline', activeIcon: 'musical-notes' },
-  { key: 'trends', label: 'Wellness', icon: 'leaf-outline', activeIcon: 'leaf' },
+  { key: 'plan', label: 'Plan', icon: 'calendar-outline', activeIcon: 'calendar' },
+  { key: 'reminders', label: 'Reminders', icon: 'notifications-outline', activeIcon: 'notifications' },
+  { key: 'rewards', label: 'Rewards', icon: 'trophy-outline', activeIcon: 'trophy' },
   { key: 'profile', label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
 ];
 
 const TAB_CONTENT = {
   home: {
-    eyebrow: 'Daily Flow',
+    eyebrow: 'Daily Momentum',
     title: 'Welcome back',
     description:
-      "Keep momentum today with calming walks, focused playlists, and simple wellness rituals.",
+      'Build healthy movement in small bursts with reminders, streaks, and daily missions.',
   },
-  add: {
-    eyebrow: 'Create',
-    title: 'Add a mindful moment',
+  plan: {
+    eyebrow: 'Move Plan',
+    title: 'Plan your active breaks',
     description:
-      'Capture a mood note, save a route, or pin a playlist so your routine keeps getting easier.',
+      'Set quick movement blocks for your day: stretch, stand, walk indoors, and breathe.',
   },
-  bookmarks: {
-    eyebrow: 'Saved',
-    title: 'Your favorites are ready',
+  reminders: {
+    eyebrow: 'Nudges',
+    title: 'Stay consistent all day',
     description:
-      'Jump back into routes and music you loved before without searching through everything again.',
+      'Gentle reminders help you move every hour and avoid long inactive sessions.',
   },
-  trends: {
-    eyebrow: 'Insights',
-    title: 'You are building consistency',
+  rewards: {
+    eyebrow: 'Gamified Progress',
+    title: 'Unlock rewards by moving',
     description:
-      'Your activity trend is improving this month. Small daily actions are stacking up in a good way.',
+      'Earn points, keep your streak alive, and complete missions to level up your wellness journey.',
   },
   profile: {
     eyebrow: 'Account',
@@ -62,6 +63,7 @@ const TAB_CONTENT = {
 };
 
 const HomeScreen = ({ navigation }) => {
+  const { colors } = useTheme();
   const [menuVisible, setMenuVisible] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
   const menuAnim = useRef(new Animated.Value(0)).current;
@@ -79,11 +81,7 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const navigateToTab = tabKey => {
-    if (tabKey === 'add') {
-      navigation?.navigate('WalkingRoutes');
-    } else if (tabKey === 'bookmarks') {
-      navigation?.navigate('Music');
-    } else if (tabKey === 'trends') {
+    if (tabKey === 'plan' || tabKey === 'reminders' || tabKey === 'rewards') {
       navigation?.navigate('Wellness');
     } else if (tabKey === 'profile') {
       navigation?.navigate('Profile');
@@ -99,11 +97,7 @@ const HomeScreen = ({ navigation }) => {
       easing: Easing.in(Easing.cubic),
       useNativeDriver: true,
     }).start(() => {
-      if (nextTabKey === 'walks') {
-        navigation?.navigate('WalkingRoutes');
-      } else if (nextTabKey === 'music') {
-        navigation?.navigate('Music');
-      } else if (nextTabKey === 'wellness') {
+      if (nextTabKey === 'wellness' || nextTabKey === 'challenges' || nextTabKey === 'plan') {
         navigation?.navigate('Wellness');
       } else if (nextTabKey === 'profile') {
         navigation?.navigate('Profile');
@@ -115,74 +109,74 @@ const HomeScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.appFrame}>
-        <View style={styles.header}>
+    <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]}>
+      <View style={[styles.appFrame, { backgroundColor: colors.bg }]}>
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <View>
-            <Text style={styles.brand}>Serapis</Text>
-            <Text style={styles.headerSub}>Mental wellness companion</Text>
+            <Text style={[styles.brand, { color: colors.heading }]}>Serapis</Text>
+            <Text style={[styles.headerSub, { color: colors.muted }]}>Mental wellness companion</Text>
           </View>
           <TouchableOpacity
             onPress={openMenu}
             accessibilityRole="button"
             accessibilityLabel="Open navigation menu"
-            style={styles.menuButton}
+            style={[styles.menuButton, { backgroundColor: colors.accentBg }]}
           >
-            <Ionicons name="menu-outline" size={24} color="#2d6a4f" />
+            <Ionicons name="menu-outline" size={24} color={colors.accent} />
           </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
-          <View style={styles.heroCard}>
-            <Text style={styles.eyebrow}>{content.eyebrow}</Text>
-            <Text style={styles.heading}>{content.title}</Text>
-            <Text style={styles.description}>{content.description}</Text>
+          <View style={[styles.heroCard, { backgroundColor: colors.heroBg }]}> 
+            <Text style={[styles.eyebrow, { color: colors.heroEyebrow }]}>{content.eyebrow}</Text>
+            <Text style={[styles.heading, { color: colors.heroText }]}>{content.title}</Text>
+            <Text style={[styles.description, { color: colors.heroDesc }]}>{content.description}</Text>
 
             <View style={styles.heroActions}>
               <TouchableOpacity
-                style={styles.primaryButton}
+                style={[styles.primaryButton, { backgroundColor: colors.accentLight }]}
                 accessibilityRole="button"
-                accessibilityLabel="Open walking routes"
-                onPress={() => navigation?.navigate('WalkingRoutes')}
+                accessibilityLabel="Open movement plan"
+                onPress={() => navigation?.navigate('Wellness')}
               >
-                <Ionicons name="walk-outline" size={16} color="#fff" />
-                <Text style={styles.primaryButtonText}>Walking Routes</Text>
+                <Ionicons name="footsteps-outline" size={16} color="#fff" />
+                <Text style={styles.primaryButtonText}>Movement Plan</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.secondaryButton}
+                style={[styles.secondaryButton, { backgroundColor: colors.heroSecBg }]}
                 accessibilityRole="button"
-                accessibilityLabel="Open music playlists"
-                onPress={() => navigation?.navigate('Music')}
+                accessibilityLabel="Open daily challenges"
+                onPress={() => navigation?.navigate('Wellness')}
               >
-                <Ionicons name="musical-notes-outline" size={16} color="#2d6a4f" />
-                <Text style={styles.secondaryButtonText}>Music Playlists</Text>
+                <Ionicons name="trophy-outline" size={16} color={colors.heroSecText} />
+                <Text style={[styles.secondaryButtonText, { color: colors.heroSecText }]}>Daily Challenges</Text>
               </TouchableOpacity>
             </View>
           </View>
 
           <View style={styles.metricsRow}>
-            <View style={styles.metricCard}>
-              <Text style={styles.metricValue}>11</Text>
-              <Text style={styles.metricLabel}>Walks this month</Text>
+            <View style={[styles.metricCard, { backgroundColor: colors.bg, borderColor: colors.border }]}> 
+              <Text style={[styles.metricValue, { color: colors.text }]}>840</Text>
+              <Text style={[styles.metricLabel, { color: colors.secondary }]}>Move points this week</Text>
             </View>
-            <View style={styles.metricCard}>
-              <Text style={styles.metricValue}>7h 20m</Text>
-              <Text style={styles.metricLabel}>Calm listening</Text>
+            <View style={[styles.metricCard, { backgroundColor: colors.bg, borderColor: colors.border }]}> 
+              <Text style={[styles.metricValue, { color: colors.text }]}>6 days</Text>
+              <Text style={[styles.metricLabel, { color: colors.secondary }]}>Current reminder streak</Text>
             </View>
           </View>
 
-          <View style={styles.progressCard}>
+          <View style={[styles.progressCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.progressHeader}>
-              <Text style={styles.progressTitle}>Progression March ‘26</Text>
-              <Ionicons name="trending-up" size={18} color="#2f7d32" />
+              <Text style={[styles.progressTitle, { color: colors.text }]}>Mission Progress Today</Text>
+              <Ionicons name="trending-up" size={18} color={colors.success} />
             </View>
-            <Text style={styles.progressText}>
-              You have been consistent this month. Keep going with short routines and daily check-ins.
+            <Text style={[styles.progressText, { color: colors.accent }]}> 
+              3/5 missions complete. Next: 3-minute stretch break in 20 minutes.
             </Text>
           </View>
         </ScrollView>
 
-        <View style={styles.bottomNav}>
+        <View style={[styles.bottomNav, { backgroundColor: colors.navBg, borderTopColor: colors.border }]}>
           {TABS.map(tab => (
             <TouchableOpacity
               key={tab.key}
@@ -194,9 +188,9 @@ const HomeScreen = ({ navigation }) => {
               <Ionicons
                 name={activeTab === tab.key ? tab.activeIcon : tab.icon}
                 size={20}
-                color={activeTab === tab.key ? '#2d6a4f' : '#74c69d'}
+                color={activeTab === tab.key ? colors.accent : colors.navIcon}
               />
-              <Text style={[styles.navLabel, activeTab === tab.key && styles.navLabelActive]}>{tab.label}</Text>
+              <Text style={[styles.navLabel, { color: colors.navIcon }, activeTab === tab.key && { color: colors.accent }]}>{tab.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -211,10 +205,11 @@ const HomeScreen = ({ navigation }) => {
             },
           ]}
         >
-          <Pressable style={styles.menuBackdrop} onPress={() => closeMenu()} />
+          <Pressable style={[styles.menuBackdrop, { backgroundColor: colors.backdrop }]} onPress={() => closeMenu()} />
           <Animated.View
             style={[
               styles.menuPanel,
+              { backgroundColor: colors.bg },
               {
                 transform: [
                   {
@@ -228,26 +223,26 @@ const HomeScreen = ({ navigation }) => {
             ]}
           >
             <View style={styles.menuHeader}>
-              <Text style={styles.menuTitle}>Serapis</Text>
+              <Text style={[styles.menuTitle, { color: colors.heading }]}>Serapis</Text>
               <TouchableOpacity
                 onPress={() => closeMenu()}
                 accessibilityRole="button"
                 accessibilityLabel="Close navigation menu"
               >
-                <Ionicons name="close" size={24} color="#2d6a4f" />
+                <Ionicons name="close" size={24} color={colors.accent} />
               </TouchableOpacity>
             </View>
-            <Text style={styles.menuSubtitle}>Navigate your app</Text>
+            <Text style={[styles.menuSubtitle, { color: colors.muted }]}>Navigate your app</Text>
 
             {MENU_ITEMS.map(item => (
               <TouchableOpacity
                 key={item.key}
                 onPress={() => closeMenu(item.key)}
-                style={styles.menuItem}
+                style={[styles.menuItem, { backgroundColor: colors.surfaceAlt }]}
                 accessibilityRole="button"
               >
-                <Ionicons name={item.icon} size={20} color="#40916c" />
-                <Text style={[styles.menuItemText, activeTab === item.key && styles.menuItemActive]}>
+                <Ionicons name={item.icon} size={20} color={colors.secondary} />
+                <Text style={[styles.menuItemText, { color: colors.accent }, activeTab === item.key && { color: colors.heading }]}>
                   {item.label}
                 </Text>
               </TouchableOpacity>

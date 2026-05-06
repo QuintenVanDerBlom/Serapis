@@ -2,14 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { authService } from '../services/authService';
 
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import HomeScreen from '../screens/HomeScreen';
-import WalkingRoutesScreen from '../screens/WalkingRoutesScreen';
-import MusicScreen from '../screens/MusicScreen';
-import MusicPlayerScreen from '../screens/MusicPlayerScreen';
 import WellnessScreen from '../screens/WellnessScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
@@ -23,7 +20,8 @@ const AppNavigator = () => {
 
     const bootstrapSession = async () => {
       try {
-        const currentUser = await AsyncStorage.getItem('currentUser');
+        const { data } = await authService.getSession();
+        const currentUser = data?.session?.user;
         if (isMounted) {
           setInitialRoute(currentUser ? 'Home' : 'Login');
         }
@@ -72,21 +70,6 @@ const AppNavigator = () => {
           name="Home"
           component={HomeScreen}
           options={{ title: 'Home' }}
-        />
-        <Stack.Screen
-          name="WalkingRoutes"
-          component={WalkingRoutesScreen}
-          options={{ title: 'Walking Routes' }}
-        />
-        <Stack.Screen
-          name="Music"
-          component={MusicScreen}
-          options={{ title: 'Music' }}
-        />
-        <Stack.Screen
-          name="MusicPlayer"
-          component={MusicPlayerScreen}
-          options={{ title: 'Music Player' }}
         />
         <Stack.Screen
           name="Wellness"
