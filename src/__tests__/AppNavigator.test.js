@@ -70,6 +70,24 @@ jest.mock('../screens/ProfileScreen', () => {
   return () => React.createElement(Text, null, 'Profile Screen');
 });
 
+jest.mock('../screens/ProgressScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return () => React.createElement(Text, null, 'Progress Screen');
+});
+
+jest.mock('../screens/TasksScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return () => React.createElement(Text, null, 'Tasks Screen');
+});
+
+jest.mock('../screens/MilestonesScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return () => React.createElement(Text, null, 'Milestones Screen');
+});
+
 describe('AppNavigator', () => {
   beforeEach(() => {
     jest.clearAllMocks();

@@ -22,36 +22,36 @@ describe('HomeScreen', () => {
 
     expect(getByText('Serapis')).toBeOnTheScreen();
     expect(getByText('Welcome back')).toBeOnTheScreen();
-    expect(getByText('Movement Plan')).toBeOnTheScreen();
+    expect(getByText('Open Tasks')).toBeOnTheScreen();
     expect(getByLabelText('Go to home tab')).toBeOnTheScreen();
     expect(getByLabelText('Go to profile tab')).toBeOnTheScreen();
   });
 
-  it('navigates to Wellness when rewards tab is pressed', () => {
+  it('navigates to Milestones when milestones tab is pressed', () => {
     const navigation = createNavigation();
     const { getByLabelText } = render(<HomeScreen navigation={navigation} />);
 
-    fireEvent.press(getByLabelText('Go to rewards tab'));
+    fireEvent.press(getByLabelText('Go to milestones tab'));
 
-    expect(navigation.navigate).toHaveBeenCalledWith('Wellness');
+    expect(navigation.navigate).toHaveBeenCalledWith('Milestones');
   });
 
-  it('navigates to Wellness when plan tab is pressed', () => {
+  it('navigates to Progress when progress tab is pressed', () => {
     const navigation = createNavigation();
     const { getByLabelText } = render(<HomeScreen navigation={navigation} />);
 
-    fireEvent.press(getByLabelText('Go to plan tab'));
+    fireEvent.press(getByLabelText('Go to progress tab'));
 
-    expect(navigation.navigate).toHaveBeenCalledWith('Wellness');
+    expect(navigation.navigate).toHaveBeenCalledWith('Progress');
   });
 
-  it('navigates to Wellness when reminders tab is pressed', () => {
+  it('navigates to Tasks when tasks tab is pressed', () => {
     const navigation = createNavigation();
     const { getByLabelText } = render(<HomeScreen navigation={navigation} />);
 
-    fireEvent.press(getByLabelText('Go to reminders tab'));
+    fireEvent.press(getByLabelText('Go to tasks tab'));
 
-    expect(navigation.navigate).toHaveBeenCalledWith('Wellness');
+    expect(navigation.navigate).toHaveBeenCalledWith('Tasks');
   });
 
   it('navigates to Profile when profile tab is pressed', () => {
@@ -84,36 +84,36 @@ describe('HomeScreen', () => {
     expect(queryByText('Navigate your app')).not.toBeOnTheScreen();
   });
 
-  it('navigates to wellness from movement plan CTA', () => {
+  it('navigates to tasks from movement plan CTA', () => {
     const navigation = createNavigation();
     const { getByLabelText } = render(<HomeScreen navigation={navigation} />);
 
     fireEvent.press(getByLabelText('Open movement plan'));
 
-    expect(navigation.navigate).toHaveBeenCalledWith('Wellness');
+    expect(navigation.navigate).toHaveBeenCalledWith('Tasks');
   });
 
-  it('navigates to wellness from daily challenges CTA', () => {
+  it('navigates to milestones from daily challenges CTA', () => {
     const navigation = createNavigation();
     const { getByLabelText } = render(<HomeScreen navigation={navigation} />);
 
     fireEvent.press(getByLabelText('Open daily challenges'));
 
-    expect(navigation.navigate).toHaveBeenCalledWith('Wellness');
+    expect(navigation.navigate).toHaveBeenCalledWith('Milestones');
   });
 
-  it('navigates to wellness from menu item', () => {
+  it('navigates to tasks from menu item', () => {
     const navigation = createNavigation();
     const { getByLabelText, getAllByText } = render(<HomeScreen navigation={navigation} />);
 
     fireEvent.press(getByLabelText('Open navigation menu'));
-    const movePlanItems = getAllByText('Move Plan');
-    fireEvent.press(movePlanItems[movePlanItems.length - 1]);
+    const taskItems = getAllByText('Tasks');
+    fireEvent.press(taskItems[taskItems.length - 1]);
 
     act(() => {
       jest.advanceTimersByTime(250);
     });
 
-    expect(navigation.navigate).toHaveBeenCalledWith('Wellness');
+    expect(navigation.navigate).toHaveBeenCalledWith('Tasks');
   });
 });

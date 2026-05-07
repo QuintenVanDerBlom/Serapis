@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,13 +11,37 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { authService } from '../services/authService';
+import { journeyService } from '../services/journeyService';
+import BottomNav from '../components/BottomNav';
 
-const PROFILE_STATS = [
-  { label: 'Move Points', value: '4,260' },
-  { label: 'Missions Done', value: '98' },
-  { label: 'Reminders Kept', value: '211' },
-  { label: 'Best Streak', value: '12 days' },
-];
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const toDateKey = dateLike => {
+  const d = new Date(dateLike);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString().slice(0, 10);
+};
+
+const computeBestStreak = completedDateKeys => {
+  const uniqueSorted = [...new Set(completedDateKeys.filter(Boolean))].sort();
+  if (!uniqueSorted.length) return 0;
+
+  let best = 1;
+  let current = 1;
+
+  for (let i = 1; i < uniqueSorted.length; i += 1) {
+    const prev = new Date(uniqueSorted[i - 1]).getTime();
+    const next = new Date(uniqueSorted[i]).getTime();
+    if (!Number.isNaN(prev) && !Number.isNaN(next) && next - prev === DAY_MS) {
+      current += 1;
+      best = Math.max(best, current);
+    } else {
+      current = 1;
+    }
+  }
+
+  return best;
+};
 
 const SETTINGS_ITEMS = [
   { key: 'notifications', label: 'Notifications', icon: 'notifications-outline' },
@@ -27,6 +51,53 @@ const SETTINGS_ITEMS = [
 
 const ProfileScreen = ({ navigation }) => {
   const { colors, isDark, toggleTheme } = useTheme();
+  const [displayName, setDisplayName] = useState('Serapis User');
+  const [displayEmail, setDisplayEmail] = useState('user@serapis.app');
+  const [stats, setStats] = useState({
+    movePoints: 0,
+    missionsDone: 0,
+    remindersKept: 0,
+    bestStreakDays: 0,
+  });
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadProfileData = async () => {
+      const { data: userData } = await authService.getCurrentUser();
+      const user = userData?.user || {};
+      const userId = user.id || 'guest';
+      const username = user.username || 'Serapis User';
+      const email = user.email || (user.username ? `${user.username}@serapis.app` : 'user@serapis.app');
+
+      const [{ data: tasks }, { data: progress }] = await Promise.all([
+        journeyService.getTasks(userId),
+        journeyService.getMonthlyProgress(userId),
+      ]);
+
+      if (!mounted) return;
+
+      const completedTasks = (tasks || []).filter(task => task.completed);
+      const completedDateKeys = completedTasks.map(task => toDateKey(task.completedAt));
+
+      setDisplayName(username);
+      setDisplayEmail(email);
+      setStats({
+        movePoints: progress?.earnedPoints || completedTasks.reduce((sum, task) => sum + (task.points || 0), 0),
+        missionsDone: completedTasks.length,
+        remindersKept: completedTasks.filter(task => task.reminderEnabled).length,
+        bestStreakDays: computeBestStreak(completedDateKeys),
+      });
+    };
+
+    loadProfileData();
+
+    const unsubscribe = navigation?.addListener?.('focus', loadProfileData);
+    return () => {
+      mounted = false;
+      if (unsubscribe) unsubscribe();
+    };
+  }, [navigation]);
 
   const handleLogout = async () => {
     try {
@@ -53,20 +124,30 @@ const ProfileScreen = ({ navigation }) => {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.avatarSection}>
-          <View style={[styles.avatarCircle, { backgroundColor: colors.accentBg }]}>
+          <View style={[styles.avatarCircle, { backgroundColor: colors.accentBg }]}> 
             <Ionicons name="person" size={40} color={colors.accentLight} />
           </View>
-          <Text style={[styles.userName, { color: colors.text }]}>Serapis User</Text>
-          <Text style={[styles.userEmail, { color: colors.secondary }]}>user@serapis.app</Text>
+          <Text style={[styles.userName, { color: colors.text }]}>{displayName}</Text>
+          <Text style={[styles.userEmail, { color: colors.secondary }]}>{displayEmail}</Text>
         </View>
 
         <View style={styles.statsRow}>
-          {PROFILE_STATS.map(stat => (
-            <View key={stat.label} style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Text style={[styles.statValue, { color: colors.text }]}>{stat.value}</Text>
-              <Text style={[styles.statLabel, { color: colors.secondary }]}>{stat.label}</Text>
-            </View>
-          ))}
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+            <Text style={[styles.statValue, { color: colors.text }]}>{stats.movePoints}</Text>
+            <Text style={[styles.statLabel, { color: colors.secondary }]}>Move Points</Text>
+          </View>
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+            <Text style={[styles.statValue, { color: colors.text }]}>{stats.missionsDone}</Text>
+            <Text style={[styles.statLabel, { color: colors.secondary }]}>Missions Done</Text>
+          </View>
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+            <Text style={[styles.statValue, { color: colors.text }]}>{stats.remindersKept}</Text>
+            <Text style={[styles.statLabel, { color: colors.secondary }]}>Reminders Kept</Text>
+          </View>
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+            <Text style={[styles.statValue, { color: colors.text }]}>{stats.bestStreakDays} days</Text>
+            <Text style={[styles.statLabel, { color: colors.secondary }]}>Best Streak</Text>
+          </View>
         </View>
 
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
@@ -106,6 +187,8 @@ const ProfileScreen = ({ navigation }) => {
           <Text style={[styles.logoutText, { color: colors.error }]}>Log out</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <BottomNav navigation={navigation} activeKey="profile" />
     </SafeAreaView>
   );
 };

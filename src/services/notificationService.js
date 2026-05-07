@@ -21,6 +21,27 @@ export const REMINDER_CONFIG = {
 let _listener = null;
 const _timers = {};
 
+const getConfig = reminder => {
+  if (!reminder) return null;
+
+  if (typeof reminder === 'string') {
+    return REMINDER_CONFIG[reminder]
+      ? { key: reminder, ...REMINDER_CONFIG[reminder] }
+      : null;
+  }
+
+  if (typeof reminder === 'object' && reminder.key && reminder.intervalMs) {
+    return {
+      key: reminder.key,
+      title: reminder.title || 'Reminder',
+      body: reminder.body || 'Time to take care of yourself.',
+      intervalMs: reminder.intervalMs,
+    };
+  }
+
+  return null;
+};
+
 export const notificationService = {
   setListener(fn) {
     _listener = fn;
@@ -30,11 +51,11 @@ export const notificationService = {
     _listener = null;
   },
 
-  _fire(reminderKey) {
-    const config = REMINDER_CONFIG[reminderKey];
+  _fire(reminder) {
+    const config = getConfig(reminder);
     if (!config || !_listener) return;
     Vibration.vibrate([0, 300, 100, 300]);
-    _listener({ key: reminderKey, title: config.title, body: config.body });
+    _listener({ key: config.key, title: config.title, body: config.body });
   },
 
   sendTestNotification() {
@@ -47,11 +68,11 @@ export const notificationService = {
     });
   },
 
-  scheduleReminder(reminderKey) {
-    const config = REMINDER_CONFIG[reminderKey];
+  scheduleReminder(reminder) {
+    const config = getConfig(reminder);
     if (!config) return;
-    this.cancelReminder(reminderKey);
-    _timers[reminderKey] = setInterval(() => this._fire(reminderKey), config.intervalMs);
+    this.cancelReminder(config.key);
+    _timers[config.key] = setInterval(() => this._fire(config), config.intervalMs);
   },
 
   cancelReminder(reminderKey) {
@@ -63,8 +84,9 @@ export const notificationService = {
 
   syncReminders(reminders) {
     for (const r of reminders) {
+      if (!r?.key) continue;
       if (r.enabled) {
-        this.scheduleReminder(r.key);
+        this.scheduleReminder(r);
       } else {
         this.cancelReminder(r.key);
       }

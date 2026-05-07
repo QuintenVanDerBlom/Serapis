@@ -9,6 +9,9 @@ import RegisterScreen from '../screens/RegisterScreen';
 import HomeScreen from '../screens/HomeScreen';
 import WellnessScreen from '../screens/WellnessScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import ProgressScreen from '../screens/ProgressScreen';
+import TasksScreen from '../screens/TasksScreen';
+import MilestonesScreen from '../screens/MilestonesScreen';
 
 const Stack = createStackNavigator();
 
@@ -80,6 +83,21 @@ const AppNavigator = () => {
           name="Profile"
           component={ProfileScreen}
           options={{ title: 'Profile' }}
+        />
+        <Stack.Screen
+          name="Progress"
+          component={ProgressScreen}
+          options={{ title: 'Progress' }}
+        />
+        <Stack.Screen
+          name="Tasks"
+          component={TasksScreen}
+          options={{ title: 'Tasks' }}
+        />
+        <Stack.Screen
+          name="Milestones"
+          component={MilestonesScreen}
+          options={{ title: 'Milestones' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

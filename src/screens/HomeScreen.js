@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,20 +12,22 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
+import { authService } from '../services/authService';
+import { journeyService } from '../services/journeyService';
 
 const MENU_ITEMS = [
   { key: 'home', label: 'Home', icon: 'home-outline' },
-  { key: 'plan', label: 'Move Plan', icon: 'footsteps-outline' },
-  { key: 'challenges', label: 'Challenges', icon: 'trophy-outline' },
-  { key: 'wellness', label: 'Wellness', icon: 'leaf-outline' },
+  { key: 'progress', label: 'Progress', icon: 'stats-chart-outline' },
+  { key: 'tasks', label: 'Tasks', icon: 'checkbox-outline' },
+  { key: 'milestones', label: 'Milestones', icon: 'ribbon-outline' },
   { key: 'profile', label: 'Profile', icon: 'person-outline' },
 ];
 
 const TABS = [
   { key: 'home', label: 'Home', icon: 'home-outline', activeIcon: 'home' },
-  { key: 'plan', label: 'Plan', icon: 'calendar-outline', activeIcon: 'calendar' },
-  { key: 'reminders', label: 'Reminders', icon: 'notifications-outline', activeIcon: 'notifications' },
-  { key: 'rewards', label: 'Rewards', icon: 'trophy-outline', activeIcon: 'trophy' },
+  { key: 'progress', label: 'Progress', icon: 'stats-chart-outline', activeIcon: 'stats-chart' },
+  { key: 'tasks', label: 'Tasks', icon: 'checkbox-outline', activeIcon: 'checkbox' },
+  { key: 'milestones', label: 'Milestones', icon: 'ribbon-outline', activeIcon: 'ribbon' },
   { key: 'profile', label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
 ];
 
@@ -36,23 +38,23 @@ const TAB_CONTENT = {
     description:
       'Build healthy movement in small bursts with reminders, streaks, and daily missions.',
   },
-  plan: {
-    eyebrow: 'Move Plan',
-    title: 'Plan your active breaks',
+  progress: {
+    eyebrow: 'Monthly Insights',
+    title: 'Understand your momentum',
     description:
-      'Set quick movement blocks for your day: stretch, stand, walk indoors, and breathe.',
+      'Review your monthly completed tasks, earned points, and active days in one place.',
   },
-  reminders: {
-    eyebrow: 'Nudges',
-    title: 'Stay consistent all day',
+  tasks: {
+    eyebrow: 'Action Board',
+    title: 'Take care of yourself today',
     description:
-      'Gentle reminders help you move every hour and avoid long inactive sessions.',
+      'Complete simple wellness tasks and keep reminder nudges active throughout your day.',
   },
-  rewards: {
-    eyebrow: 'Gamified Progress',
-    title: 'Unlock rewards by moving',
+  milestones: {
+    eyebrow: 'Achievements',
+    title: 'Unlock meaningful milestones',
     description:
-      'Earn points, keep your streak alive, and complete missions to level up your wellness journey.',
+      'Turn daily self-care into long-term growth with point-based milestone goals.',
   },
   profile: {
     eyebrow: 'Account',
@@ -62,13 +64,84 @@ const TAB_CONTENT = {
   },
 };
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const toDateKey = dateLike => {
+  const d = new Date(dateLike);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString().slice(0, 10);
+};
+
+const computeCurrentStreak = completedDateKeys => {
+  const unique = new Set(completedDateKeys.filter(Boolean));
+  let streak = 0;
+
+  for (let i = 0; i < 365; i += 1) {
+    const day = new Date(Date.now() - i * DAY_MS).toISOString().slice(0, 10);
+    if (unique.has(day)) {
+      streak += 1;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+};
+
 const HomeScreen = ({ navigation }) => {
   const { colors } = useTheme();
   const [menuVisible, setMenuVisible] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
+  const [pointsThisWeek, setPointsThisWeek] = useState(0);
+  const [streakDays, setStreakDays] = useState(0);
+  const [dailyProgressText, setDailyProgressText] = useState('0/0 tasks complete today.');
   const menuAnim = useRef(new Animated.Value(0)).current;
 
   const content = useMemo(() => TAB_CONTENT[activeTab] || TAB_CONTENT.home, [activeTab]);
+
+  const loadHomeMetrics = useCallback(async () => {
+    const { data: userData } = await authService.getCurrentUser();
+    const userId = userData?.user?.id || 'guest';
+
+    const { data } = await journeyService.getTasks(userId);
+    const nextTasks = data || [];
+
+    const now = Date.now();
+    const weekAgo = now - 7 * DAY_MS;
+    const todayKey = new Date(now).toISOString().slice(0, 10);
+
+    const completedTasks = nextTasks.filter(task => task.completed && task.completedAt);
+    const weeklyPoints = completedTasks
+      .filter(task => {
+        const ts = new Date(task.completedAt).getTime();
+        return !Number.isNaN(ts) && ts >= weekAgo;
+      })
+      .reduce((sum, task) => sum + (task.points || 0), 0);
+
+    const completedDateKeys = completedTasks.map(task => toDateKey(task.completedAt));
+    const streak = computeCurrentStreak(completedDateKeys);
+
+    const doneToday = completedTasks.filter(task => toDateKey(task.completedAt) === todayKey).length;
+    const totalTasks = nextTasks.length;
+    const nextTask = nextTasks.find(task => !task.completed);
+    const progressText =
+      doneToday >= totalTasks && totalTasks > 0
+        ? 'All daily tasks complete. Great consistency today.'
+        : `${doneToday}/${totalTasks} tasks complete today${nextTask ? `. Next: ${nextTask.title}.` : '.'}`;
+
+    setPointsThisWeek(weeklyPoints);
+    setStreakDays(streak);
+    setDailyProgressText(progressText);
+  }, []);
+
+  useEffect(() => {
+    loadHomeMetrics();
+
+    const unsubscribe = navigation?.addListener?.('focus', loadHomeMetrics);
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [navigation, loadHomeMetrics]);
 
   const openMenu = () => {
     setMenuVisible(true);
@@ -81,8 +154,12 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const navigateToTab = tabKey => {
-    if (tabKey === 'plan' || tabKey === 'reminders' || tabKey === 'rewards') {
-      navigation?.navigate('Wellness');
+    if (tabKey === 'progress') {
+      navigation?.navigate('Progress');
+    } else if (tabKey === 'tasks') {
+      navigation?.navigate('Tasks');
+    } else if (tabKey === 'milestones') {
+      navigation?.navigate('Milestones');
     } else if (tabKey === 'profile') {
       navigation?.navigate('Profile');
     } else {
@@ -97,8 +174,12 @@ const HomeScreen = ({ navigation }) => {
       easing: Easing.in(Easing.cubic),
       useNativeDriver: true,
     }).start(() => {
-      if (nextTabKey === 'wellness' || nextTabKey === 'challenges' || nextTabKey === 'plan') {
-        navigation?.navigate('Wellness');
+      if (nextTabKey === 'progress') {
+        navigation?.navigate('Progress');
+      } else if (nextTabKey === 'tasks') {
+        navigation?.navigate('Tasks');
+      } else if (nextTabKey === 'milestones') {
+        navigation?.navigate('Milestones');
       } else if (nextTabKey === 'profile') {
         navigation?.navigate('Profile');
       } else if (nextTabKey && TAB_CONTENT[nextTabKey]) {
@@ -137,41 +218,41 @@ const HomeScreen = ({ navigation }) => {
                 style={[styles.primaryButton, { backgroundColor: colors.accentLight }]}
                 accessibilityRole="button"
                 accessibilityLabel="Open movement plan"
-                onPress={() => navigation?.navigate('Wellness')}
+                onPress={() => navigation?.navigate('Tasks')}
               >
                 <Ionicons name="footsteps-outline" size={16} color="#fff" />
-                <Text style={styles.primaryButtonText}>Movement Plan</Text>
+                <Text style={styles.primaryButtonText}>Open Tasks</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.secondaryButton, { backgroundColor: colors.heroSecBg }]}
                 accessibilityRole="button"
                 accessibilityLabel="Open daily challenges"
-                onPress={() => navigation?.navigate('Wellness')}
+                onPress={() => navigation?.navigate('Milestones')}
               >
                 <Ionicons name="trophy-outline" size={16} color={colors.heroSecText} />
-                <Text style={[styles.secondaryButtonText, { color: colors.heroSecText }]}>Daily Challenges</Text>
+                <Text style={[styles.secondaryButtonText, { color: colors.heroSecText }]}>View Milestones</Text>
               </TouchableOpacity>
             </View>
           </View>
 
           <View style={styles.metricsRow}>
             <View style={[styles.metricCard, { backgroundColor: colors.bg, borderColor: colors.border }]}> 
-              <Text style={[styles.metricValue, { color: colors.text }]}>840</Text>
-              <Text style={[styles.metricLabel, { color: colors.secondary }]}>Move points this week</Text>
+              <Text style={[styles.metricValue, { color: colors.text }]}>{pointsThisWeek}</Text>
+              <Text style={[styles.metricLabel, { color: colors.secondary }]}>Points this week</Text>
             </View>
             <View style={[styles.metricCard, { backgroundColor: colors.bg, borderColor: colors.border }]}> 
-              <Text style={[styles.metricValue, { color: colors.text }]}>6 days</Text>
-              <Text style={[styles.metricLabel, { color: colors.secondary }]}>Current reminder streak</Text>
+              <Text style={[styles.metricValue, { color: colors.text }]}>{streakDays} days</Text>
+              <Text style={[styles.metricLabel, { color: colors.secondary }]}>Current streak</Text>
             </View>
           </View>
 
-          <View style={[styles.progressCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={[styles.progressCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
             <View style={styles.progressHeader}>
-              <Text style={[styles.progressTitle, { color: colors.text }]}>Mission Progress Today</Text>
+              <Text style={[styles.progressTitle, { color: colors.text }]}>Daily Progress</Text>
               <Ionicons name="trending-up" size={18} color={colors.success} />
             </View>
             <Text style={[styles.progressText, { color: colors.accent }]}> 
-              3/5 missions complete. Next: 3-minute stretch break in 20 minutes.
+              {dailyProgressText}
             </Text>
           </View>
         </ScrollView>

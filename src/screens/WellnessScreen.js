@@ -14,6 +14,7 @@ import { useTheme } from '../context/ThemeContext';
 import { authService } from '../services/authService';
 import { DEFAULT_WELLNESS_STATE, wellnessService } from '../services/wellnessService';
 import { notificationService } from '../services/notificationService';
+import BottomNav from '../components/BottomNav';
 
 const MISSIONS = [
   { key: 'stretch', title: '3-minute stretch', xp: 60, icon: 'body-outline' },
@@ -223,6 +224,8 @@ const WellnessScreen = ({ navigation }) => {
           </Text>
         </View>
       </ScrollView>
+
+      <BottomNav navigation={navigation} activeKey="tasks" />
     </SafeAreaView>
   );
 };
