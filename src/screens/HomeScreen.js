@@ -110,18 +110,18 @@ const HomeScreen = ({ navigation }) => {
     const weekAgo = now - 7 * DAY_MS;
     const todayKey = new Date(now).toISOString().slice(0, 10);
 
-    const completedTasks = nextTasks.filter(task => task.completed && task.completedAt);
-    const weeklyPoints = completedTasks
+    const completionHistory = nextTasks.filter(task => Boolean(task.completedAt));
+    const weeklyPoints = completionHistory
       .filter(task => {
         const ts = new Date(task.completedAt).getTime();
         return !Number.isNaN(ts) && ts >= weekAgo;
       })
       .reduce((sum, task) => sum + (task.points || 0), 0);
 
-    const completedDateKeys = completedTasks.map(task => toDateKey(task.completedAt));
+    const completedDateKeys = completionHistory.map(task => toDateKey(task.completedAt));
     const streak = computeCurrentStreak(completedDateKeys);
 
-    const doneToday = completedTasks.filter(task => toDateKey(task.completedAt) === todayKey).length;
+    const doneToday = nextTasks.filter(task => task.completed && toDateKey(task.completedAt) === todayKey).length;
     const totalTasks = nextTasks.length;
     const nextTask = nextTasks.find(task => !task.completed);
     const progressText =
@@ -338,97 +338,94 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#edf7f0',
   },
   appFrame: {
     flex: 1,
-    backgroundColor: '#f8faf9',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#d8f3dc',
   },
   brand: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1b5e3f',
+    fontSize: 26,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   headerSub: {
-    marginTop: 2,
+    marginTop: 3,
     fontSize: 12,
-    color: '#52b788',
+    fontWeight: '500',
+    letterSpacing: 0.1,
   },
   menuButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#d8f3dc',
   },
   content: {
     flex: 1,
   },
   contentContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    paddingBottom: 24,
+    paddingHorizontal: 18,
+    paddingVertical: 20,
+    paddingBottom: 28,
   },
   heroCard: {
-    backgroundColor: '#2d6a4f',
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 14,
+    borderRadius: 22,
+    padding: 22,
+    marginBottom: 16,
+    shadowColor: '#1a3529',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 6,
   },
   eyebrow: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#b7e4c7',
+    fontSize: 11,
+    fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 8,
+    letterSpacing: 1.2,
+    marginBottom: 10,
   },
   heading: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#ffffff',
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: -0.3,
     marginBottom: 8,
   },
   description: {
     fontSize: 14,
-    lineHeight: 21,
-    color: '#f1fff5',
-    marginBottom: 14,
+    lineHeight: 22,
+    marginBottom: 18,
   },
   heroActions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
   },
   primaryButton: {
     flex: 1,
-    backgroundColor: '#52b788',
-    borderRadius: 12,
-    paddingVertical: 11,
-    paddingHorizontal: 12,
+    borderRadius: 14,
+    paddingVertical: 13,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 6,
+    gap: 7,
     alignItems: 'center',
   },
   secondaryButton: {
     flex: 1,
-    backgroundColor: '#f1fff5',
-    borderRadius: 12,
-    paddingVertical: 11,
-    paddingHorizontal: 12,
+    borderRadius: 14,
+    paddingVertical: 13,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 6,
+    gap: 7,
     alignItems: 'center',
   },
   primaryButtonText: {
@@ -437,39 +434,44 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   secondaryButtonText: {
-    color: '#1b5e3f',
     fontSize: 13,
     fontWeight: '700',
   },
   metricsRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 14,
+    gap: 10,
+    marginBottom: 16,
   },
   metricCard: {
     flex: 1,
-    backgroundColor: '#f8faf9',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#d8f3dc',
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 0,
+    shadowColor: '#1a3529',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   metricValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1b4332',
+    fontSize: 20,
+    fontWeight: '800',
     marginBottom: 4,
+    letterSpacing: -0.3,
   },
   metricLabel: {
     fontSize: 12,
-    color: '#40916c',
+    fontWeight: '500',
   },
   progressCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#d8f3dc',
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 0,
+    shadowColor: '#1a3529',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   progressHeader: {
     flexDirection: 'row',
@@ -480,55 +482,50 @@ const styles = StyleSheet.create({
   progressTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1b4332',
   },
   progressText: {
     fontSize: 13,
     lineHeight: 20,
-    color: '#2d6a4f',
   },
   bottomNav: {
     flexDirection: 'row',
     borderTopWidth: 1,
-    borderTopColor: '#d8f3dc',
     justifyContent: 'space-around',
-    paddingTop: 8,
-    paddingBottom: 10,
-    backgroundColor: '#ffffff',
+    paddingTop: 6,
+    paddingBottom: 12,
+    paddingHorizontal: 4,
   },
   navButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
-    minWidth: 58,
+    gap: 2,
+    minWidth: 60,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 16,
   },
   navLabel: {
-    fontSize: 11,
-    color: '#74c69d',
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
-  navLabelActive: {
-    color: '#2d6a4f',
-  },
+  navLabelActive: {},
   menuOverlay: {
     position: 'absolute',
     top: 0,
     right: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: 'rgba(9, 21, 16, 0.3)',
   },
   menuBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(6, 16, 10, 0.4)',
   },
   menuPanel: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#f8faf9',
-    paddingHorizontal: 24,
-    paddingTop: 56,
-    paddingBottom: 28,
+    paddingHorizontal: 28,
+    paddingTop: 60,
+    paddingBottom: 32,
   },
   menuHeader: {
     flexDirection: 'row',
@@ -537,33 +534,29 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   menuTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1b5e3f',
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   menuSubtitle: {
-    fontSize: 12,
-    color: '#52b788',
-    marginBottom: 28,
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 32,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    marginBottom: 4,
-    backgroundColor: '#edf7f0',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    marginBottom: 6,
   },
   menuItemText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#2d6a4f',
   },
-  menuItemActive: {
-    color: '#1b5e3f',
-  },
+  menuItemActive: {},
 });
 
 export default HomeScreen;

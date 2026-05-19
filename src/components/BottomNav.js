@@ -21,12 +21,12 @@ const BottomNav = ({ navigation, activeKey }) => {
         return (
           <TouchableOpacity
             key={item.key}
-            style={styles.navButton}
+            style={[styles.navButton, active && [styles.navButtonActive, { backgroundColor: colors.accentBg }]]}
             accessibilityRole="button"
             accessibilityLabel={`Go to ${item.key} tab`}
             onPress={() => navigation?.navigate(item.route)}
           >
-            <Ionicons name={active ? item.activeIcon : item.icon} size={20} color={active ? colors.accent : colors.navIcon} />
+            <Ionicons name={active ? item.activeIcon : item.icon} size={22} color={active ? colors.accent : colors.navIcon} />
             <Text style={[styles.navLabel, { color: active ? colors.accent : colors.navIcon }]}>{item.label}</Text>
           </TouchableOpacity>
         );
@@ -40,18 +40,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderTopWidth: 1,
     justifyContent: 'space-around',
-    paddingTop: 8,
-    paddingBottom: 10,
+    paddingTop: 6,
+    paddingBottom: 12,
+    paddingHorizontal: 4,
   },
   navButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
-    minWidth: 58,
+    gap: 2,
+    minWidth: 60,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 16,
+  },
+  navButtonActive: {
+    borderRadius: 16,
   },
   navLabel: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
 });
 

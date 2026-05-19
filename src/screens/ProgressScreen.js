@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,25 +11,22 @@ const ProgressScreen = ({ navigation }) => {
   const { colors } = useTheme();
   const [monthlyRows, setMonthlyRows] = useState([]);
 
-  useEffect(() => {
-    let mounted = true;
+  const loadData = useCallback(async () => {
+    const { data: userData } = await authService.getCurrentUser();
+    const userId = userData?.user?.id || 'guest';
 
-    const load = async () => {
-      const { data: userData } = await authService.getCurrentUser();
-      const userId = userData?.user?.id || 'guest';
-
-      const { data } = await journeyService.getLastMonthsProgress(userId, 6);
-      if (mounted) {
-        setMonthlyRows(data || []);
-      }
-    };
-
-    load();
-
-    return () => {
-      mounted = false;
-    };
+    const { data } = await journeyService.getLastMonthsProgress(userId, 6);
+    setMonthlyRows(data || []);
   }, []);
+
+  useEffect(() => {
+    loadData();
+
+    const unsubscribe = navigation?.addListener?.('focus', loadData);
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [navigation, loadData]);
 
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]}>
@@ -89,25 +86,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     borderBottomWidth: 1,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700' },
+  headerTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },
   headerSpacer: { width: 22 },
-  content: { padding: 16, paddingBottom: 28 },
-  card: { borderRadius: 16, padding: 16, marginBottom: 12 },
-  cardEyebrow: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 },
-  cardTitle: { fontSize: 22, fontWeight: '700', marginBottom: 8 },
-  cardBody: { fontSize: 13, lineHeight: 19 },
-  emptyCard: { borderWidth: 1, borderRadius: 14, padding: 14 },
-  emptyTitle: { fontSize: 15, fontWeight: '700', marginBottom: 6 },
-  emptyBody: { fontSize: 13, lineHeight: 18 },
-  rowCard: { borderRadius: 14, padding: 14, marginBottom: 10 },
-  month: { fontSize: 16, fontWeight: '700', marginBottom: 8 },
-  statRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  statLabel: { fontSize: 13 },
-  statValue: { fontSize: 13, fontWeight: '700' },
+  content: { padding: 18, paddingBottom: 32 },
+  card: {
+    borderRadius: 22,
+    padding: 22,
+    marginBottom: 16,
+    shadowColor: '#1a3529',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 6,
+  },
+  cardEyebrow: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 },
+  cardTitle: { fontSize: 24, fontWeight: '800', letterSpacing: -0.3, marginBottom: 8 },
+  cardBody: { fontSize: 14, lineHeight: 22 },
+  emptyCard: {
+    borderWidth: 0,
+    borderRadius: 18,
+    padding: 18,
+    shadowColor: '#1a3529',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  emptyTitle: { fontSize: 16, fontWeight: '700', marginBottom: 6 },
+  emptyBody: { fontSize: 13, lineHeight: 20 },
+  rowCard: {
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#1a3529',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  month: { fontSize: 17, fontWeight: '800', letterSpacing: -0.2, marginBottom: 10 },
+  statRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6, alignItems: 'center' },
+  statLabel: { fontSize: 13, fontWeight: '500' },
+  statValue: { fontSize: 14, fontWeight: '700' },
 });
 
 export default ProgressScreen;

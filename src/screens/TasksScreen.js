@@ -53,13 +53,23 @@ const TasksScreen = ({ navigation }) => {
     };
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = navigation?.addListener?.('focus', async () => {
+      const userId = userIdRef.current;
+      if (!userId) return;
+      await reload(userId);
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [navigation]);
+
   const toggleTaskDone = async (task) => {
     const userId = userIdRef.current;
-    if (task.completed) return;
-
-    const { error } = await journeyService.markTaskDone(userId, task);
+    const { error } = await journeyService.setTaskCompletion(userId, task, !task.completed);
     if (error) {
-      Alert.alert('Error', 'Could not mark task done');
+      Alert.alert('Error', 'Could not update task');
       return;
     }
 
@@ -153,32 +163,51 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     borderBottomWidth: 1,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700' },
+  headerTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },
   headerSpacer: { width: 22 },
-  content: { padding: 16, paddingBottom: 28 },
-  infoCard: { borderWidth: 1, borderRadius: 14, padding: 12, marginBottom: 12 },
-  infoTitle: { fontSize: 14, fontWeight: '700', marginBottom: 6 },
-  infoBody: { fontSize: 12, lineHeight: 18 },
+  content: { padding: 18, paddingBottom: 32 },
+  infoCard: {
+    borderWidth: 0,
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 14,
+    shadowColor: '#1a3529',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  infoTitle: { fontSize: 15, fontWeight: '700', marginBottom: 6 },
+  infoBody: { fontSize: 13, lineHeight: 20 },
   testButton: {
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderRadius: 14,
+    paddingVertical: 13,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    gap: 6,
-    marginBottom: 10,
+    gap: 7,
+    marginBottom: 14,
   },
   testButtonText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  taskCard: { borderRadius: 12, padding: 12, marginBottom: 8 },
+  taskCard: {
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 10,
+    shadowColor: '#1a3529',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
+  },
   taskMainRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  taskTextCol: { flex: 1, paddingRight: 10 },
-  taskTitle: { fontSize: 14, fontWeight: '700' },
-  taskMeta: { marginTop: 2, fontSize: 12 },
-  reminderRow: { marginTop: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  taskTextCol: { flex: 1, paddingRight: 12 },
+  taskTitle: { fontSize: 15, fontWeight: '700' },
+  taskMeta: { marginTop: 3, fontSize: 12, fontWeight: '500' },
+  reminderRow: { marginTop: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   reminderLabel: { fontSize: 12, fontWeight: '600' },
 });
 

@@ -7,6 +7,12 @@ const toMonthKey = date => {
   return `${year}-${month}`;
 };
 
+const toDateKey = dateLike => {
+  const d = new Date(dateLike);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString().slice(0, 10);
+};
+
 const DEFAULT_TASKS = [
   { title: '10-minute walk', category: 'Movement', points: 45, reminder_enabled: true },
   { title: 'Drink a glass of water', category: 'Hydration', points: 30, reminder_enabled: true },
@@ -51,10 +57,32 @@ const fallbackMilestones = DEFAULT_MILESTONES.map((m, index) => ({
 }));
 
 const LOCAL_TASKS_KEY_PREFIX = '@serapis_tasks_';
+const LOCAL_PROGRESS_KEY_PREFIX = '@serapis_progress_';
 const normalizeUserId = userId => userId || 'guest';
 const isSeedTaskId = taskId => typeof taskId === 'string' && taskId.startsWith('seed-task-');
 
 const buildLocalTasksKey = userId => `${LOCAL_TASKS_KEY_PREFIX}${normalizeUserId(userId)}`;
+const buildLocalProgressKey = (userId, monthKey) =>
+  `${LOCAL_PROGRESS_KEY_PREFIX}${normalizeUserId(userId)}_${monthKey}`;
+
+const isCompletedToday = task => {
+  if (!task?.completed) return false;
+  const completedDay = toDateKey(task.completedAt);
+  if (!completedDay) return false;
+  return completedDay === toDateKey(new Date());
+};
+
+const normalizeTasksForToday = tasks =>
+  (tasks || []).map(task => {
+    if (!task?.completed) return task;
+    if (isCompletedToday(task)) return task;
+    return { ...task, completed: false };
+  });
+
+const hasCompletionStateChanges = (prevTasks, nextTasks) => {
+  const prevById = new Map((prevTasks || []).map(task => [task.id, Boolean(task.completed)]));
+  return (nextTasks || []).some(task => prevById.get(task.id) !== Boolean(task.completed));
+};
 
 const mergeWithFallbackTasks = storedTasks => {
   const byId = new Map((storedTasks || []).map(task => [task.id, task]));
@@ -85,6 +113,63 @@ const loadLocalTasks = async userId => {
   }
 };
 
+const loadLocalTasksWithDailyReset = async userId => {
+  const localTasks = await loadLocalTasks(userId);
+  const nextTasks = normalizeTasksForToday(localTasks);
+
+  if (hasCompletionStateChanges(localTasks, nextTasks)) {
+    await saveLocalTasks(userId, nextTasks);
+  }
+
+  return nextTasks;
+};
+
+const loadLocalProgress = async (userId, monthKey = toMonthKey(new Date())) => {
+  try {
+    const raw = await AsyncStorage.getItem(buildLocalProgressKey(userId, monthKey));
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    const dayCounts = parsed?.dayCounts && typeof parsed.dayCounts === 'object' ? parsed.dayCounts : {};
+
+    return {
+      monthKey,
+      completedTasks: Number(parsed?.completedTasks || 0),
+      earnedPoints: Number(parsed?.earnedPoints || 0),
+      dayCounts,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const saveLocalProgress = async (userId, progress) => {
+  if (!progress?.monthKey) return;
+
+  const serializable = {
+    monthKey: progress.monthKey,
+    completedTasks: Math.max(0, Number(progress.completedTasks || 0)),
+    earnedPoints: Math.max(0, Number(progress.earnedPoints || 0)),
+    dayCounts: progress.dayCounts && typeof progress.dayCounts === 'object' ? progress.dayCounts : {},
+  };
+
+  try {
+    await AsyncStorage.setItem(
+      buildLocalProgressKey(userId, progress.monthKey),
+      JSON.stringify(serializable),
+    );
+  } catch {
+    // ignore persistence errors
+  }
+};
+
+const mapLocalProgress = progress => ({
+  monthKey: progress?.monthKey || toMonthKey(new Date()),
+  completedTasks: Number(progress?.completedTasks || 0),
+  earnedPoints: Number(progress?.earnedPoints || 0),
+  activeDays: Object.keys(progress?.dayCounts || {}).length,
+});
+
 const saveLocalTasks = async (userId, tasks) => {
   const serializable = (tasks || []).map(task => ({
     id: task.id,
@@ -103,7 +188,7 @@ const saveLocalTasks = async (userId, tasks) => {
 
 const buildProgressFromTasks = (tasks, monthKey = toMonthKey(new Date())) => {
   const monthCompleted = (tasks || []).filter(task => {
-    if (!task.completed || !task.completedAt) return false;
+    if (!task.completedAt) return false;
     return String(task.completedAt).startsWith(monthKey);
   });
 
@@ -189,7 +274,7 @@ export const journeyService = {
 
   async getTasks(userId) {
     if (!hasSupabaseConfig || !supabase || !userId) {
-      const localTasks = await loadLocalTasks(userId);
+      const localTasks = await loadLocalTasksWithDailyReset(userId);
       return { data: localTasks, error: null };
     }
 
@@ -202,17 +287,27 @@ export const journeyService = {
       .order('created_at', { ascending: true });
 
     if (error) {
-      const localTasks = await loadLocalTasks(userId);
+      const localTasks = await loadLocalTasksWithDailyReset(userId);
       return { data: localTasks, error };
     }
 
     const rows = (data || []).map(mapTask);
+    const normalizedRows = normalizeTasksForToday(rows);
+    const staleTaskIds = rows.filter(task => task.completed && !isCompletedToday(task)).map(task => task.id);
+
+    if (staleTaskIds.length > 0) {
+      await supabase
+        .from('user_tasks')
+        .update({ completed: false, updated_at: new Date().toISOString() })
+        .in('id', staleTaskIds);
+    }
+
     if (rows.length === 0) {
-      const localTasks = await loadLocalTasks(userId);
+      const localTasks = await loadLocalTasksWithDailyReset(userId);
       return { data: localTasks, error: null };
     }
 
-    return { data: rows, error: null };
+    return { data: normalizedRows, error: null };
   },
 
   async updateTaskReminder(taskId, reminderEnabled, userId) {
@@ -240,19 +335,47 @@ export const journeyService = {
   },
 
   async markTaskDone(userId, task) {
+    return this.setTaskCompletion(userId, task, true);
+  },
+
+  async setTaskCompletion(userId, task, completed) {
     if (!task?.id) {
+      return { error: null };
+    }
+
+    if (Boolean(task.completed) === Boolean(completed)) {
       return { error: null };
     }
 
     if (!hasSupabaseConfig || !supabase || !userId || isSeedTaskId(task.id)) {
       const nowIso = new Date().toISOString();
+      const monthKey = toMonthKey(new Date());
+      const todayKey = toDateKey(nowIso);
       const localTasks = await loadLocalTasks(userId);
       const nextTasks = localTasks.map(item =>
         item.id === task.id
-          ? { ...item, completed: true, completedAt: nowIso }
+          ? { ...item, completed: Boolean(completed), completedAt: completed ? nowIso : null }
           : item,
       );
       await saveLocalTasks(userId, nextTasks);
+
+      const existingProgress = await loadLocalProgress(userId, monthKey);
+      const dayCounts = { ...(existingProgress?.dayCounts || {}) };
+      const nextCountForToday = Math.max(0, (dayCounts[todayKey] || 0) + (completed ? 1 : -1));
+      if (nextCountForToday > 0) {
+        dayCounts[todayKey] = nextCountForToday;
+      } else {
+        delete dayCounts[todayKey];
+      }
+
+      const nextProgress = {
+        monthKey,
+        completedTasks: Math.max(0, (existingProgress?.completedTasks || 0) + (completed ? 1 : -1)),
+        earnedPoints: Math.max(0, (existingProgress?.earnedPoints || 0) + (completed ? (task.points || 0) : -(task.points || 0))),
+        dayCounts,
+      };
+
+      await saveLocalProgress(userId, nextProgress);
       return { error: null };
     }
 
@@ -260,18 +383,19 @@ export const journeyService = {
 
     const { error: taskError } = await supabase
       .from('user_tasks')
-      .update({ completed: true, completed_at: nowIso, updated_at: nowIso })
+      .update({ completed: Boolean(completed), completed_at: completed ? nowIso : null, updated_at: nowIso })
       .eq('id', task.id);
 
     if (taskError) return { error: taskError };
 
     const monthKey = toMonthKey(new Date());
     const progress = await this.getMonthlyProgress(userId);
+    const taskPoints = task.points || 0;
     const next = {
       user_id: userId,
       month_key: monthKey,
-      completed_tasks: (progress.data?.completedTasks || 0) + 1,
-      earned_points: (progress.data?.earnedPoints || 0) + (task.points || 0),
+      completed_tasks: Math.max(0, (progress.data?.completedTasks || 0) + (completed ? 1 : -1)),
+      earned_points: Math.max(0, (progress.data?.earnedPoints || 0) + (completed ? taskPoints : -taskPoints)),
       active_days: Math.max(progress.data?.activeDays || 0, 1),
       updated_at: nowIso,
     };
@@ -289,7 +413,12 @@ export const journeyService = {
 
   async getMonthlyProgress(userId, monthKey = toMonthKey(new Date())) {
     if (!hasSupabaseConfig || !supabase || !userId) {
-      const localTasks = await loadLocalTasks(userId);
+      const localProgress = await loadLocalProgress(userId, monthKey);
+      if (localProgress) {
+        return { data: mapLocalProgress(localProgress), error: null };
+      }
+
+      const localTasks = await loadLocalTasksWithDailyReset(userId);
       return { data: buildProgressFromTasks(localTasks, monthKey), error: null };
     }
 
@@ -303,7 +432,12 @@ export const journeyService = {
       .maybeSingle();
 
     if (error) {
-      const localTasks = await loadLocalTasks(userId);
+      const localProgress = await loadLocalProgress(userId, monthKey);
+      if (localProgress) {
+        return { data: mapLocalProgress(localProgress), error };
+      }
+
+      const localTasks = await loadLocalTasksWithDailyReset(userId);
       return { data: buildProgressFromTasks(localTasks, monthKey), error };
     }
     if (!data) {
@@ -316,7 +450,13 @@ export const journeyService = {
 
   async getLastMonthsProgress(userId, limit = 4) {
     if (!hasSupabaseConfig || !supabase || !userId) {
-      const localTasks = await loadLocalTasks(userId);
+      const monthKey = toMonthKey(new Date());
+      const localProgress = await loadLocalProgress(userId, monthKey);
+      if (localProgress) {
+        return { data: [mapLocalProgress(localProgress)], error: null };
+      }
+
+      const localTasks = await loadLocalTasksWithDailyReset(userId);
       return { data: [buildProgressFromTasks(localTasks)], error: null };
     }
 
@@ -328,7 +468,13 @@ export const journeyService = {
       .limit(limit);
 
     if (error) {
-      const localTasks = await loadLocalTasks(userId);
+      const monthKey = toMonthKey(new Date());
+      const localProgress = await loadLocalProgress(userId, monthKey);
+      if (localProgress) {
+        return { data: [mapLocalProgress(localProgress)], error };
+      }
+
+      const localTasks = await loadLocalTasksWithDailyReset(userId);
       return { data: [buildProgressFromTasks(localTasks)], error };
     }
 
