@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { authService } from '../services/authService';
+import { onboardingService } from '../services/onboardingService';
 
 const LoginScreen = ({ navigation }) => {
   const { colors } = useTheme();
@@ -41,9 +42,13 @@ const LoginScreen = ({ navigation }) => {
       });
 
       if (!error) {
+        const { data: userData } = await authService.getCurrentUser();
+        const userId = userData?.user?.id || 'guest';
+        const onboarded = await onboardingService.isOnboarded(userId);
+
         Alert.alert('Success', 'Login successful!', [
           { text: 'OK', onPress: () => {
-            navigation.navigate('Home');
+            navigation.navigate(onboarded ? 'Home' : 'Onboarding');
           }}
         ]);
       } else {

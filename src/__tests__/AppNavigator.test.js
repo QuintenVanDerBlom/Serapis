@@ -2,6 +2,7 @@ import React from 'react';
 import { render, waitFor } from '@testing-library/react-native';
 import AppNavigator from '../navigation/AppNavigator';
 import { authService } from '../services/authService';
+import { onboardingService } from '../services/onboardingService';
 
 jest.mock('../services/authService', () => ({
   authService: {
@@ -88,15 +89,22 @@ jest.mock('../screens/MilestonesScreen', () => {
   return () => React.createElement(Text, null, 'Milestones Screen');
 });
 
+jest.mock('../screens/OnboardingScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return () => React.createElement(Text, null, 'Onboarding Screen');
+});
+
 describe('AppNavigator', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('starts at Home when currentUser exists', async () => {
-    authService.getSession.mockResolvedValueOnce({
+  it('starts at Home when currentUser exists and is onboarded', async () => {
+    authService.getSession.mockResolvedValue({
       data: { session: { user: { id: 'u1' } } },
     });
+    onboardingService.isOnboarded.mockResolvedValue(true);
 
     const { getByTestId, getByText } = render(<AppNavigator />);
 
@@ -107,8 +115,23 @@ describe('AppNavigator', () => {
     expect(getByText('Home Screen')).toBeOnTheScreen();
   });
 
+  it('starts at Onboarding when currentUser exists but not onboarded', async () => {
+    authService.getSession.mockResolvedValue({
+      data: { session: { user: { id: 'u2' } } },
+    });
+    onboardingService.isOnboarded.mockResolvedValue(false);
+
+    const { getByTestId, getByText } = render(<AppNavigator />);
+
+    await waitFor(() => {
+      expect(getByTestId('initial-route').props.children).toBe('Onboarding');
+    });
+
+    expect(getByText('Onboarding Screen')).toBeOnTheScreen();
+  });
+
   it('starts at Login when currentUser is missing', async () => {
-    authService.getSession.mockResolvedValueOnce({ data: { session: null } });
+    authService.getSession.mockResolvedValue({ data: { session: null } });
 
     const { getByTestId, getByText } = render(<AppNavigator />);
 

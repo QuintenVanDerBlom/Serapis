@@ -44,6 +44,14 @@
           "color": "#2b7a55",
           "defaultChannel": "serapis-reminders"
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Serapis uses your location to offer nearby wellness tasks.",
+          "locationAlwaysPermission": "Serapis uses your location to offer nearby wellness tasks.",
+          "locationWhenInUsePermission": "Serapis uses your location to offer nearby wellness tasks."
+        }
       ]
     ],
     "extra": {

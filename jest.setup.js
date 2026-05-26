@@ -93,6 +93,43 @@ jest.mock('expo-application', () => ({
   nativeApplicationVersion: '1.0.0',
 }));
 
+jest.mock('expo-location', () => ({
+  requestForegroundPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  getCurrentPositionAsync: jest.fn().mockResolvedValue({
+    coords: { latitude: 51.9244, longitude: 4.4777 },
+  }),
+  Accuracy: { Balanced: 3 },
+}));
+
+jest.mock('./src/services/onboardingService', () => ({
+  onboardingService: {
+    saveProfile: jest.fn().mockResolvedValue(undefined),
+    getProfile: jest.fn().mockResolvedValue(null),
+    isOnboarded: jest.fn().mockResolvedValue(false),
+    clearProfile: jest.fn().mockResolvedValue(undefined),
+  },
+  FEELING_OPTIONS: [
+    { key: 'anxiety', label: 'Anxiety', icon: 'pulse-outline', description: 'Worry' },
+    { key: 'depression', label: 'Depression', icon: 'cloudy-outline', description: 'Low mood' },
+    { key: 'stress', label: 'Stress', icon: 'flash-outline', description: 'Overwhelm' },
+    { key: 'restlessness', label: 'Restlessness', icon: 'swap-horizontal-outline', description: 'Fidgety' },
+    { key: 'spiralling', label: 'Spiralling', icon: 'sync-outline', description: 'Looping thoughts' },
+  ],
+  DISABILITY_OPTIONS: [
+    { key: 'mobility', label: 'Mobility impairment', description: 'Difficulty walking' },
+    { key: 'visual', label: 'Visual impairment', description: 'Difficulty seeing' },
+    { key: 'chronicPain', label: 'Chronic pain or fatigue', description: 'Persistent pain' },
+  ],
+}));
+
+jest.mock('./src/services/locationService', () => ({
+  locationService: {
+    getCurrentLocation: jest.fn().mockResolvedValue({ latitude: 51.9244, longitude: 4.4777 }),
+    isInRotterdam: jest.fn().mockResolvedValue(false),
+    clearCache: jest.fn(),
+  },
+}));
+
 jest.mock('react-native-webview', () => {
   const React = require('react');
   const { View } = require('react-native');

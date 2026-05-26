@@ -3,9 +3,11 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { authService } from '../services/authService';
+import { onboardingService } from '../services/onboardingService';
 
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import OnboardingScreen from '../screens/OnboardingScreen';
 import HomeScreen from '../screens/HomeScreen';
 import WellnessScreen from '../screens/WellnessScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -26,7 +28,12 @@ const AppNavigator = () => {
         const { data } = await authService.getSession();
         const currentUser = data?.session?.user;
         if (isMounted) {
-          setInitialRoute(currentUser ? 'Home' : 'Login');
+          if (!currentUser) {
+            setInitialRoute('Login');
+          } else {
+            const onboarded = await onboardingService.isOnboarded(currentUser.id);
+            setInitialRoute(onboarded ? 'Home' : 'Onboarding');
+          }
         }
       } catch (error) {
         if (isMounted) {
@@ -68,6 +75,11 @@ const AppNavigator = () => {
           name="Register" 
           component={RegisterScreen} 
           options={{ title: 'Register' }}
+        />
+        <Stack.Screen
+          name="Onboarding"
+          component={OnboardingScreen}
+          options={{ title: 'Onboarding', gestureEnabled: false }}
         />
         <Stack.Screen
           name="Home"

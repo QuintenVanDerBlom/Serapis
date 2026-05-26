@@ -7,6 +7,13 @@ import { authService } from '../services/authService';
 jest.mock('../services/authService', () => ({
   authService: {
     loginWithUsername: jest.fn(),
+    getCurrentUser: jest.fn().mockResolvedValue({ data: { user: { id: 'u1' } } }),
+  },
+}));
+
+jest.mock('../services/onboardingService', () => ({
+  onboardingService: {
+    isOnboarded: jest.fn().mockResolvedValue(true),
   },
 }));
 
@@ -74,7 +81,7 @@ describe('LoginScreen', () => {
     const successButtons = alertSpy.mock.calls.find(call => call[0] === 'Success')?.[2] || [];
     successButtons[0].onPress();
 
-    expect(navigation.navigate).toHaveBeenCalledWith('Home');
+    expect(navigation.navigate).toHaveBeenCalledWith('Home');  
   });
 
   it('renders a password visibility toggle button', () => {

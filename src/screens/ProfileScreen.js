@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   View,
   Text,
   StyleSheet,
@@ -12,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { authService } from '../services/authService';
 import { journeyService } from '../services/journeyService';
+import { onboardingService } from '../services/onboardingService';
 import BottomNav from '../components/BottomNav';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -96,6 +98,29 @@ const ProfileScreen = ({ navigation }) => {
     };
   }, [navigation]);
 
+  const handleRedoOnboarding = () => {
+    Alert.alert(
+      'Redo Onboarding',
+      'This will let you update your feelings and accessibility preferences. Your progress will be kept.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Continue',
+          onPress: async () => {
+            try {
+              const { data: userData } = await authService.getCurrentUser();
+              const userId = userData?.user?.id || 'guest';
+              await onboardingService.clearProfile(userId);
+              navigation?.reset({ index: 0, routes: [{ name: 'Onboarding' }] });
+            } catch {
+              Alert.alert('Error', 'Could not reset onboarding');
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const handleLogout = async () => {
     try {
       await authService.logout();
@@ -159,6 +184,17 @@ const ProfileScreen = ({ navigation }) => {
             accessibilityLabel="Toggle dark mode"
           />
         </View>
+
+        <TouchableOpacity
+          style={[styles.settingRow, { backgroundColor: colors.surfaceAlt }]}
+          accessibilityRole="button"
+          accessibilityLabel="Redo onboarding"
+          onPress={handleRedoOnboarding}
+        >
+          <Ionicons name="refresh-outline" size={20} color={colors.accent} />
+          <Text style={[styles.settingLabel, { color: colors.text }]}>Update My Goals</Text>
+          <Ionicons name="chevron-forward" size={16} color={colors.borderStrong} />
+        </TouchableOpacity>
 
         {SETTINGS_ITEMS.map(item => (
           <TouchableOpacity

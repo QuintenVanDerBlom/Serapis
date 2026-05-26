@@ -1,5 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { hasSupabaseConfig, supabase } from './supabaseClient';
+import { onboardingService } from './onboardingService';
+import { locationService } from './locationService';
+import { buildDailyTasks } from '../data/taskCatalog';
 
 const toMonthKey = date => {
   const year = date.getFullYear();
@@ -21,6 +24,19 @@ const DEFAULT_TASKS = [
   { title: 'Take 6 deep breaths', category: 'Mindfulness', points: 20, reminder_enabled: false },
   { title: 'Step outside for daylight', category: 'Recovery', points: 30, reminder_enabled: false },
 ];
+
+const getPersonalizedTemplates = async userId => {
+  try {
+    const profile = await onboardingService.getProfile(userId);
+    if (!profile || !profile.feelings || profile.feelings.length === 0) {
+      return null;
+    }
+    const isInRotterdam = await locationService.isInRotterdam();
+    return buildDailyTasks(profile, isInRotterdam);
+  } catch {
+    return null;
+  }
+};
 
 const DEFAULT_MILESTONES = [
   { title: 'Starter Momentum', description: 'Reach 300 total points', target_points: 300 },
@@ -59,7 +75,7 @@ const fallbackMilestones = DEFAULT_MILESTONES.map((m, index) => ({
 const LOCAL_TASKS_KEY_PREFIX = '@serapis_tasks_';
 const LOCAL_PROGRESS_KEY_PREFIX = '@serapis_progress_';
 const normalizeUserId = userId => userId || 'guest';
-const isSeedTaskId = taskId => typeof taskId === 'string' && taskId.startsWith('seed-task-');
+const isLocalTaskId = taskId => typeof taskId === 'string' && (taskId.startsWith('seed-task-') || taskId.startsWith('task-'));
 
 const buildLocalTasksKey = userId => `${LOCAL_TASKS_KEY_PREFIX}${normalizeUserId(userId)}`;
 const buildLocalProgressKey = (userId, monthKey) =>
@@ -84,10 +100,11 @@ const hasCompletionStateChanges = (prevTasks, nextTasks) => {
   return (nextTasks || []).some(task => prevById.get(task.id) !== Boolean(task.completed));
 };
 
-const mergeWithFallbackTasks = storedTasks => {
+const mergeWithFallbackTasks = (storedTasks, templates) => {
+  const taskTemplates = templates || fallbackTasks;
   const byId = new Map((storedTasks || []).map(task => [task.id, task]));
 
-  return fallbackTasks.map(task => {
+  return taskTemplates.map(task => {
     const saved = byId.get(task.id);
     if (!saved) return { ...task };
 
@@ -103,11 +120,12 @@ const mergeWithFallbackTasks = storedTasks => {
 
 const loadLocalTasks = async userId => {
   try {
+    const templates = await getPersonalizedTemplates(userId);
     const raw = await AsyncStorage.getItem(buildLocalTasksKey(userId));
-    if (!raw) return mergeWithFallbackTasks([]);
+    if (!raw) return mergeWithFallbackTasks([], templates);
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return mergeWithFallbackTasks([]);
-    return mergeWithFallbackTasks(parsed);
+    if (!Array.isArray(parsed)) return mergeWithFallbackTasks([], templates);
+    return mergeWithFallbackTasks(parsed, templates);
   } catch {
     return mergeWithFallbackTasks([]);
   }
@@ -315,7 +333,7 @@ export const journeyService = {
       return { error: null };
     }
 
-    if (!hasSupabaseConfig || !supabase || !userId || isSeedTaskId(taskId)) {
+    if (!hasSupabaseConfig || !supabase || !userId || isLocalTaskId(taskId)) {
       const localTasks = await loadLocalTasks(userId);
       const nextTasks = localTasks.map(task =>
         task.id === taskId
@@ -347,7 +365,7 @@ export const journeyService = {
       return { error: null };
     }
 
-    if (!hasSupabaseConfig || !supabase || !userId || isSeedTaskId(task.id)) {
+    if (!hasSupabaseConfig || !supabase || !userId || isLocalTaskId(task.id)) {
       const nowIso = new Date().toISOString();
       const monthKey = toMonthKey(new Date());
       const todayKey = toDateKey(nowIso);

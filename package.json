@@ -20,6 +20,7 @@
     "expo-application": "~55.0.14",
     "expo-dev-client": "~55.0.34",
     "expo-device": "~55.0.17",
+    "expo-location": "~55.1.10",
     "expo-notifications": "~55.0.23",
     "expo-status-bar": "~55.0.5",
     "expo-task-manager": "~55.0.16",

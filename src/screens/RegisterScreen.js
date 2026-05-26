@@ -103,7 +103,7 @@ const RegisterScreen = ({ navigation }) => {
       }
       
       Alert.alert('Success', 'Account created successfully!', [
-        { text: 'OK', onPress: () => navigation.navigate(data?.session ? 'Home' : 'Login') }
+        { text: 'OK', onPress: () => navigation.navigate(data?.session ? 'Onboarding' : 'Login') }
       ]);
     } catch (error) {
       Alert.alert('Error', 'Failed to create account');
