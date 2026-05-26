@@ -1,4 +1,5 @@
 import { Vibration } from 'react-native';
+import { pushNotificationService } from './pushNotificationService';
 
 export const REMINDER_CONFIG = {
   hourly: {
@@ -95,5 +96,9 @@ export const notificationService = {
 
   cancelAllReminders() {
     Object.keys(_timers).forEach(key => this.cancelReminder(key));
+  },
+
+  async scheduleDailyTaskPush(tasks) {
+    await pushNotificationService.scheduleDailyTaskReminders(tasks);
   },
 };

@@ -52,7 +52,6 @@ const SETTINGS_ITEMS = [
 const ProfileScreen = ({ navigation }) => {
   const { colors, isDark, toggleTheme } = useTheme();
   const [displayName, setDisplayName] = useState('Serapis User');
-  const [displayEmail, setDisplayEmail] = useState('user@serapis.app');
   const [stats, setStats] = useState({
     movePoints: 0,
     missionsDone: 0,
@@ -68,7 +67,6 @@ const ProfileScreen = ({ navigation }) => {
       const user = userData?.user || {};
       const userId = user.id || 'guest';
       const username = user.username || 'Serapis User';
-      const email = user.email || (user.username ? `${user.username}@serapis.app` : 'user@serapis.app');
 
       const [{ data: tasks }, { data: progress }] = await Promise.all([
         journeyService.getTasks(userId),
@@ -81,7 +79,6 @@ const ProfileScreen = ({ navigation }) => {
       const completedDateKeys = completedTasks.map(task => toDateKey(task.completedAt));
 
       setDisplayName(username);
-      setDisplayEmail(email);
       setStats({
         movePoints: progress?.earnedPoints || completedTasks.reduce((sum, task) => sum + (task.points || 0), 0),
         missionsDone: completedTasks.length,
@@ -128,7 +125,6 @@ const ProfileScreen = ({ navigation }) => {
             <Ionicons name="person" size={40} color={colors.accentLight} />
           </View>
           <Text style={[styles.userName, { color: colors.text }]}>{displayName}</Text>
-          <Text style={[styles.userEmail, { color: colors.secondary }]}>{displayEmail}</Text>
         </View>
 
         <View style={styles.statsRow}>

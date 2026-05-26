@@ -33,6 +33,8 @@ const TasksScreen = ({ navigation }) => {
       intervalMs: 45 * 60 * 1000,
     }));
     notificationService.syncReminders(reminders);
+
+    notificationService.scheduleDailyTaskPush(data || []);
   };
 
   useEffect(() => {

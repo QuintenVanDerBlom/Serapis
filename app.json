@@ -12,7 +12,17 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "fetch",
+          "remote-notification",
+          "fetch",
+          "remote-notification"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.soulswd.serapis"
     },
     "android": {
       "adaptiveIcon": {
@@ -20,10 +30,26 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "package": "com.soulswd.serapis"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#2b7a55",
+          "defaultChannel": "serapis-reminders"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "21143784-1eaf-4ac5-a157-4a6a2de2c7d4"
+      }
     }
   }
 }

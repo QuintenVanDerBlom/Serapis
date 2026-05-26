@@ -41,7 +41,6 @@ describe('ProfileScreen', () => {
       expect(getByText('alex')).toBeOnTheScreen();
     });
 
-    expect(getByText('alex@serapis.app')).toBeOnTheScreen();
     expect(getByText('75')).toBeOnTheScreen();
     expect(getByText('Move Points')).toBeOnTheScreen();
   });
