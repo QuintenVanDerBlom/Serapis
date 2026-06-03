@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Switch,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -62,6 +63,7 @@ const ProfileScreen = ({ navigation }) => {
     remindersKept: 0,
     bestStreakDays: 0,
   });
+  const [showRedoModal, setShowRedoModal] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -101,26 +103,19 @@ const ProfileScreen = ({ navigation }) => {
   }, [navigation]);
 
   const handleRedoOnboarding = () => {
-    Alert.alert(
-      t('profile.redoOnboardingTitle'),
-      t('profile.redoOnboardingMessage'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.continue'),
-          onPress: async () => {
-            try {
-              const { data: userData } = await authService.getCurrentUser();
-              const userId = userData?.user?.id || 'guest';
-              await onboardingService.clearProfile(userId);
-              navigation?.reset({ index: 0, routes: [{ name: 'Onboarding' }] });
-            } catch {
-              Alert.alert(t('common.error'), t('profile.redoError'));
-            }
-          },
-        },
-      ],
-    );
+    setShowRedoModal(true);
+  };
+
+  const confirmRedoOnboarding = async () => {
+    setShowRedoModal(false);
+    try {
+      const { data: userData } = await authService.getCurrentUser();
+      const userId = userData?.user?.id || 'guest';
+      await onboardingService.clearProfile(userId);
+      navigation?.reset({ index: 0, routes: [{ name: 'Onboarding' }] });
+    } catch {
+      Alert.alert(t('common.error'), t('profile.redoError'));
+    }
   };
 
   const handleLogout = async () => {
@@ -246,6 +241,39 @@ const ProfileScreen = ({ navigation }) => {
       </ScrollView>
 
       <BottomNav navigation={navigation} activeKey="profile" />
+
+      <Modal
+        visible={showRedoModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowRedoModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={styles.modalHeader}>
+              <Ionicons name="refresh-outline" size={28} color={colors.accent} />
+              <Text style={[styles.modalTitle, { color: colors.text }]}>{t('profile.redoOnboardingTitle')}</Text>
+            </View>
+            <Text style={[styles.modalMessage, { color: colors.secondary }]}>
+              {t('profile.redoOnboardingMessage')}
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
+                onPress={() => setShowRedoModal(false)}
+              >
+                <Text style={[styles.modalButtonText, { color: colors.text }]}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonConfirm, { backgroundColor: colors.accent }]}
+                onPress={confirmRedoOnboarding}
+              >
+                <Text style={styles.modalButtonTextConfirm}>{t('common.continue')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -377,6 +405,72 @@ const styles = StyleSheet.create({
   langButtonText: {
     fontSize: 13,
     fontWeight: '700',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 340,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+    flex: 1,
+  },
+  modalMessage: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonCancel: {
+    borderWidth: 1,
+  },
+  modalButtonConfirm: {
+    shadowColor: '#1a3529',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  modalButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  modalButtonTextConfirm: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
   },
 });
 

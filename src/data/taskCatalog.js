@@ -183,7 +183,7 @@ const ALL_TASKS = [
     reminder_enabled: true,
     instructions: 'Put on comfortable shoes and step outside. Walk at a relaxed pace around your street or neighbourhood, no destination needed. Notice houses, trees, and sounds around you. If 10 minutes feels too long, start with 5 and extend when ready. The goal is gentle movement, not exercise.',
     links: [
-      { label: 'Open Google Maps to explore your area', url: 'https://www.google.com/maps/@0,0,15z', icon: 'map-outline' },
+      { label: 'Open Google Maps to explore your area', url: 'https://www.google.com/maps', icon: 'map-outline' },
       { label: 'Watch: Benefits of walking for mental health', url: 'https://www.youtube.com/watch?v=DsVzKCk066g', icon: 'logo-youtube' },
     ],
   },
@@ -316,7 +316,7 @@ const ALL_TASKS = [
     reminder_enabled: false,
     instructions: 'Step outside and walk a loop around your block or nearby streets. Take a route you know well so you can focus on your surroundings rather than navigation. Notice what has changed since you last walked here, new plants, parked cars, open shops. Aim for 10-15 minutes at a comfortable pace.',
     links: [
-      { label: 'Open Google Maps to explore your neighbourhood', url: 'https://www.google.com/maps/@0,0,15z', icon: 'map-outline' },
+      { label: 'Open Google Maps to explore your neighbourhood', url: 'https://www.google.com/maps', icon: 'map-outline' },
       { label: 'Watch: How walking boosts your creativity', url: 'https://www.youtube.com/watch?v=DsVzKCk066g', icon: 'logo-youtube' },
     ],
   },
@@ -374,7 +374,7 @@ const ALL_TASKS = [
     reminder_enabled: false,
     instructions: 'Pick a street or alley near your home that you have never walked down. Stroll through it with curiosity, look at the buildings, gardens, and any details that catch your eye. Novelty stimulates dopamine, so even a small detour from your usual route can feel refreshing.',
     links: [
-      { label: 'Open Google Maps to find new streets nearby', url: 'https://www.google.com/maps/@0,0,17z', icon: 'map-outline' },
+      { label: 'Open Google Maps to find new streets nearby', url: 'https://www.google.com/maps', icon: 'map-outline' },
     ],
   },
   {
