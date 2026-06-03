@@ -1,7 +1,7 @@
 import { hasSupabaseConfig, supabase } from './supabaseClient';
 
 export const DEFAULT_REMINDERS = [
-  { key: 'hourly', label: 'Hourly movement reminder', enabled: true },
+  { key: 'hourly', label: 'Hourly wellness reminder', enabled: true },
   { key: 'water', label: 'Hydration reminder', enabled: true },
   { key: 'posture', label: 'Posture check reminder', enabled: false },
 ];

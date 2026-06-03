@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { authService } from '../services/authService';
 import { journeyService } from '../services/journeyService';
 import { notificationService } from '../services/notificationService';
@@ -18,6 +19,7 @@ import BottomNav from '../components/BottomNav';
 
 const TasksScreen = ({ navigation }) => {
   const { colors } = useTheme();
+  const { t, tTask } = useLanguage();
   const [tasks, setTasks] = useState([]);
   const userIdRef = useRef(null);
 
@@ -71,7 +73,7 @@ const TasksScreen = ({ navigation }) => {
     const userId = userIdRef.current;
     const { error } = await journeyService.setTaskCompletion(userId, task, !task.completed);
     if (error) {
-      Alert.alert('Error', 'Could not update task');
+      Alert.alert(t('common.error'), t('tasksScreen.errorUpdate'));
       return;
     }
 
@@ -83,7 +85,7 @@ const TasksScreen = ({ navigation }) => {
 
     const { error } = await journeyService.updateTaskReminder(task.id, !task.reminderEnabled, userId);
     if (error) {
-      Alert.alert('Error', 'Could not update reminder');
+      Alert.alert(t('common.error'), t('tasksScreen.errorReminder'));
       return;
     }
 
@@ -100,14 +102,14 @@ const TasksScreen = ({ navigation }) => {
         <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to home" onPress={() => navigation?.goBack()}>
           <Ionicons name="arrow-back" size={22} color={colors.heading} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.heading }]}>Tasks</Text>
+        <Text style={[styles.headerTitle, { color: colors.heading }]}>{t('tasksScreen.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
-          <Text style={[styles.infoTitle, { color: colors.text }]}>Daily tasks are curated for you</Text>
-          <Text style={[styles.infoBody, { color: colors.secondary }]}>You get a fixed set of low-commitment, high-impact tasks like walking, hydration, and brief mobility breaks.</Text>
+          <Text style={[styles.infoTitle, { color: colors.text }]}>{t('tasksScreen.infoTitle')}</Text>
+          <Text style={[styles.infoBody, { color: colors.secondary }]}>{t('tasksScreen.infoBody')}</Text>
         </View>
 
         <TouchableOpacity
@@ -117,15 +119,22 @@ const TasksScreen = ({ navigation }) => {
           accessibilityLabel="Send test notification"
         >
           <Ionicons name="notifications-outline" size={16} color="#fff" />
-          <Text style={styles.testButtonText}>Send test notification</Text>
+          <Text style={styles.testButtonText}>{t('tasksScreen.sendTestNotification')}</Text>
         </TouchableOpacity>
 
         {tasks.map(task => (
-          <View key={task.id} style={[styles.taskCard, { backgroundColor: colors.surfaceAlt }]}>
+          <TouchableOpacity
+            key={task.id}
+            activeOpacity={0.7}
+            onPress={() => navigation?.navigate('TaskDetail', { task })}
+            accessibilityRole="button"
+            accessibilityLabel={`View details for ${task.title}`}
+            style={[styles.taskCard, { backgroundColor: colors.surfaceAlt }]}
+          >
             <View style={styles.taskMainRow}>
               <View style={styles.taskTextCol}>
-                <Text style={[styles.taskTitle, { color: colors.text }]}>{task.title}</Text>
-                <Text style={[styles.taskMeta, { color: colors.secondary }]}>{task.category} • {task.points} pts</Text>
+                <Text style={[styles.taskTitle, { color: colors.text }]}>{tTask(task, 'title')}</Text>
+                <Text style={[styles.taskMeta, { color: colors.secondary }]}>{task.category} • {task.points} {t('common.pts')}</Text>
               </View>
               <TouchableOpacity
                 onPress={() => toggleTaskDone(task)}
@@ -141,7 +150,7 @@ const TasksScreen = ({ navigation }) => {
             </View>
 
             <View style={styles.reminderRow}>
-              <Text style={[styles.reminderLabel, { color: colors.secondary }]}>Reminder</Text>
+              <Text style={[styles.reminderLabel, { color: colors.secondary }]}>{t('tasksScreen.reminder')}</Text>
               <Switch
                 value={task.reminderEnabled}
                 onValueChange={() => toggleReminder(task)}
@@ -150,7 +159,7 @@ const TasksScreen = ({ navigation }) => {
                 accessibilityLabel={`Toggle reminder for ${task.title}`}
               />
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
       </ScrollView>
 

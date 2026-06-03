@@ -22,6 +22,25 @@ jest.mock('./src/context/ThemeContext', () => {
   };
 });
 
+jest.mock('./src/context/LanguageContext', () => ({
+  useLanguage: () => ({
+    language: 'en',
+    setLanguage: jest.fn(),
+    t: (key) => {
+      const en = jest.requireActual('./src/i18n/en').default;
+      const keys = key.split('.');
+      let val = en;
+      for (const k of keys) {
+        if (val == null) return key;
+        val = val[k];
+      }
+      return val !== undefined ? val : key;
+    },
+    tTask: (task, field) => task?.[field] || '',
+  }),
+  LanguageProvider: ({ children }) => children,
+}));
+
 jest.mock('./src/services/notificationService', () => ({
   notificationService: {
     setListener: jest.fn(),

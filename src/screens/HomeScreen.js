@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { authService } from '../services/authService';
 import { journeyService } from '../services/journeyService';
 
@@ -30,39 +31,6 @@ const TABS = [
   { key: 'milestones', label: 'Milestones', icon: 'ribbon-outline', activeIcon: 'ribbon' },
   { key: 'profile', label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
 ];
-
-const TAB_CONTENT = {
-  home: {
-    eyebrow: 'Daily Momentum',
-    title: 'Welcome back',
-    description:
-      'Build healthy movement in small bursts with reminders, streaks, and daily missions.',
-  },
-  progress: {
-    eyebrow: 'Monthly Insights',
-    title: 'Understand your momentum',
-    description:
-      'Review your monthly completed tasks, earned points, and active days in one place.',
-  },
-  tasks: {
-    eyebrow: 'Action Board',
-    title: 'Take care of yourself today',
-    description:
-      'Complete simple wellness tasks and keep reminder nudges active throughout your day.',
-  },
-  milestones: {
-    eyebrow: 'Achievements',
-    title: 'Unlock meaningful milestones',
-    description:
-      'Turn daily self-care into long-term growth with point-based milestone goals.',
-  },
-  profile: {
-    eyebrow: 'Account',
-    title: 'Your personal space',
-    description:
-      'Manage your preferences, check your progress history, and keep Serapis aligned to your goals.',
-  },
-};
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -90,6 +58,7 @@ const computeCurrentStreak = completedDateKeys => {
 
 const HomeScreen = ({ navigation }) => {
   const { colors } = useTheme();
+  const { t } = useLanguage();
   const [menuVisible, setMenuVisible] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
   const [pointsThisWeek, setPointsThisWeek] = useState(0);
@@ -97,7 +66,11 @@ const HomeScreen = ({ navigation }) => {
   const [dailyProgressText, setDailyProgressText] = useState('0/0 tasks complete today.');
   const menuAnim = useRef(new Animated.Value(0)).current;
 
-  const content = useMemo(() => TAB_CONTENT[activeTab] || TAB_CONTENT.home, [activeTab]);
+  const content = useMemo(() => ({
+    eyebrow: t(`home.tab_${activeTab}_eyebrow`),
+    title: t(`home.tab_${activeTab}_title`),
+    description: t(`home.tab_${activeTab}_description`),
+  }), [activeTab, t]);
 
   const loadHomeMetrics = useCallback(async () => {
     const { data: userData } = await authService.getCurrentUser();
@@ -126,13 +99,13 @@ const HomeScreen = ({ navigation }) => {
     const nextTask = nextTasks.find(task => !task.completed);
     const progressText =
       doneToday >= totalTasks && totalTasks > 0
-        ? 'All daily tasks complete. Great consistency today.'
-        : `${doneToday}/${totalTasks} tasks complete today${nextTask ? `. Next: ${nextTask.title}.` : '.'}`;
+        ? t('home.allComplete')
+        : `${doneToday}/${totalTasks} ${t('home.tasksComplete')}${nextTask ? `. ${t('home.next')}: ${nextTask.title}.` : '.'}`;
 
     setPointsThisWeek(weeklyPoints);
     setStreakDays(streak);
     setDailyProgressText(progressText);
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadHomeMetrics();
@@ -195,7 +168,7 @@ const HomeScreen = ({ navigation }) => {
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <View>
             <Text style={[styles.brand, { color: colors.heading }]}>Serapis</Text>
-            <Text style={[styles.headerSub, { color: colors.muted }]}>Mental wellness companion</Text>
+            <Text style={[styles.headerSub, { color: colors.muted }]}>{t('home.subtitle')}</Text>
           </View>
           <TouchableOpacity
             onPress={openMenu}
@@ -217,11 +190,11 @@ const HomeScreen = ({ navigation }) => {
               <TouchableOpacity
                 style={[styles.primaryButton, { backgroundColor: colors.accentLight }]}
                 accessibilityRole="button"
-                accessibilityLabel="Open movement plan"
+                accessibilityLabel={t('home.openTasks')}
                 onPress={() => navigation?.navigate('Tasks')}
               >
                 <Ionicons name="footsteps-outline" size={16} color="#fff" />
-                <Text style={styles.primaryButtonText}>Open Tasks</Text>
+                <Text style={styles.primaryButtonText}>{t('home.openTasks')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.secondaryButton, { backgroundColor: colors.heroSecBg }]}
@@ -230,7 +203,7 @@ const HomeScreen = ({ navigation }) => {
                 onPress={() => navigation?.navigate('Milestones')}
               >
                 <Ionicons name="trophy-outline" size={16} color={colors.heroSecText} />
-                <Text style={[styles.secondaryButtonText, { color: colors.heroSecText }]}>View Milestones</Text>
+                <Text style={[styles.secondaryButtonText, { color: colors.heroSecText }]}>{t('home.viewMilestones')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -238,17 +211,17 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.metricsRow}>
             <View style={[styles.metricCard, { backgroundColor: colors.bg, borderColor: colors.border }]}> 
               <Text style={[styles.metricValue, { color: colors.text }]}>{pointsThisWeek}</Text>
-              <Text style={[styles.metricLabel, { color: colors.secondary }]}>Points this week</Text>
+              <Text style={[styles.metricLabel, { color: colors.secondary }]}>{t('home.pointsThisWeek')}</Text>
             </View>
             <View style={[styles.metricCard, { backgroundColor: colors.bg, borderColor: colors.border }]}> 
-              <Text style={[styles.metricValue, { color: colors.text }]}>{streakDays} days</Text>
-              <Text style={[styles.metricLabel, { color: colors.secondary }]}>Current streak</Text>
+              <Text style={[styles.metricValue, { color: colors.text }]}>{streakDays} {t('common.days')}</Text>
+              <Text style={[styles.metricLabel, { color: colors.secondary }]}>{t('home.currentStreak')}</Text>
             </View>
           </View>
 
           <View style={[styles.progressCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
             <View style={styles.progressHeader}>
-              <Text style={[styles.progressTitle, { color: colors.text }]}>Daily Progress</Text>
+              <Text style={[styles.progressTitle, { color: colors.text }]}>{t('home.dailyProgress')}</Text>
               <Ionicons name="trending-up" size={18} color={colors.success} />
             </View>
             <Text style={[styles.progressText, { color: colors.accent }]}> 
@@ -271,7 +244,7 @@ const HomeScreen = ({ navigation }) => {
                 size={20}
                 color={activeTab === tab.key ? colors.accent : colors.navIcon}
               />
-              <Text style={[styles.navLabel, { color: colors.navIcon }, activeTab === tab.key && { color: colors.accent }]}>{tab.label}</Text>
+              <Text style={[styles.navLabel, { color: colors.navIcon }, activeTab === tab.key && { color: colors.accent }]}>{t(`nav.${tab.key}`)}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -313,7 +286,7 @@ const HomeScreen = ({ navigation }) => {
                 <Ionicons name="close" size={24} color={colors.accent} />
               </TouchableOpacity>
             </View>
-            <Text style={[styles.menuSubtitle, { color: colors.muted }]}>Navigate your app</Text>
+            <Text style={[styles.menuSubtitle, { color: colors.muted }]}>{t('home.navigateApp')}</Text>
 
             {MENU_ITEMS.map(item => (
               <TouchableOpacity
@@ -324,7 +297,7 @@ const HomeScreen = ({ navigation }) => {
               >
                 <Ionicons name={item.icon} size={20} color={colors.secondary} />
                 <Text style={[styles.menuItemText, { color: colors.accent }, activeTab === item.key && { color: colors.heading }]}>
-                  {item.label}
+                  {t(`nav.${item.key}`)}
                 </Text>
               </TouchableOpacity>
             ))}

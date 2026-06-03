@@ -12,11 +12,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { authService } from '../services/authService';
 import { onboardingService } from '../services/onboardingService';
 
 const LoginScreen = ({ navigation }) => {
   const { colors } = useTheme();
+  const { t } = useLanguage();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -24,12 +26,12 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     if (!username.trim()) {
-      Alert.alert('Error', 'Please enter your username');
+      Alert.alert(t('common.error'), t('login.enterUsername'));
       return;
     }
 
     if (!password.trim()) {
-      Alert.alert('Error', 'Please enter your password');
+      Alert.alert(t('common.error'), t('login.enterPassword'));
       return;
     }
 
@@ -46,8 +48,8 @@ const LoginScreen = ({ navigation }) => {
         const userId = userData?.user?.id || 'guest';
         const onboarded = await onboardingService.isOnboarded(userId);
 
-        Alert.alert('Success', 'Login successful!', [
-          { text: 'OK', onPress: () => {
+        Alert.alert(t('common.success'), t('login.loginSuccess'), [
+          { text: t('common.ok'), onPress: () => {
             navigation.navigate(onboarded ? 'Home' : 'Onboarding');
           }}
         ]);
@@ -55,15 +57,15 @@ const LoginScreen = ({ navigation }) => {
         const message = error.message?.toLowerCase() || '';
 
         if (message.includes('not configured')) {
-          Alert.alert('Error', 'Supabase is not configured. Check EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY.');
+          Alert.alert(t('common.error'), t('login.supabaseNotConfigured'));
         } else if (message.includes('email not confirmed')) {
-          Alert.alert('Error', 'Account not confirmed. Disable email confirmation in Supabase Auth settings for username-only login.');
+          Alert.alert(t('common.error'), t('login.emailNotConfirmed'));
         } else {
-          Alert.alert('Error', 'Invalid username or password');
+          Alert.alert(t('common.error'), t('login.invalidCredentials'));
         }
       }
     } catch (error) {
-      Alert.alert('Error', 'Login failed. Please try again.');
+      Alert.alert(t('common.error'), t('login.loginFailed'));
       console.error('Login error:', error);
     } finally {
       setIsLoading(false);
@@ -72,9 +74,9 @@ const LoginScreen = ({ navigation }) => {
 
   const handleForgotPassword = () => {
     Alert.alert(
-      'Forgot Password',
-      'Password reset functionality would be implemented here. For now, please contact support.',
-      [{ text: 'OK' }]
+      t('login.forgotPasswordTitle'),
+      t('login.forgotPasswordMessage'),
+      [{ text: t('common.ok') }]
     );
   };
 
@@ -86,16 +88,16 @@ const LoginScreen = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.content}>
           <Text style={[styles.brand, { color: colors.accent }]}>Serapis</Text>
-          <Text style={[styles.title, { color: colors.heading }]}>Welcome back!</Text>
-          <Text style={[styles.subtitle, { color: colors.muted }]}>Please enter your login details below.</Text>
+          <Text style={[styles.title, { color: colors.heading }]}>{t('login.welcomeBack')}</Text>
+          <Text style={[styles.subtitle, { color: colors.muted }]}>{t('login.subtitle')}</Text>
 
           <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: colors.accent }]}>username</Text>
+            <Text style={[styles.inputLabel, { color: colors.accent }]}>{t('login.username')}</Text>
             <TextInput
               style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
               value={username}
               onChangeText={setUsername}
-              placeholder="guest_user"
+              placeholder={t('login.usernamePlaceholder')}
               placeholderTextColor={colors.placeholder}
               autoCapitalize="none"
               autoCorrect={false}
@@ -103,13 +105,13 @@ const LoginScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: colors.accent }]}>password</Text>
+            <Text style={[styles.inputLabel, { color: colors.accent }]}>{t('login.password')}</Text>
             <View style={[styles.passwordContainer, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
               <TextInput
                 style={[styles.passwordInput, { color: colors.text }]}
                 value={password}
                 onChangeText={setPassword}
-                placeholder="Enter password"
+                placeholder={t('login.passwordPlaceholder')}
                 placeholderTextColor={colors.placeholder}
                 secureTextEntry={!showPassword}
                 autoCorrect={false}
@@ -118,7 +120,7 @@ const LoginScreen = ({ navigation }) => {
                 style={styles.eyeIcon}
                 onPress={() => setShowPassword(!showPassword)}
                 accessibilityRole="button"
-                accessibilityLabel="Toggle password visibility"
+                accessibilityLabel={t('login.togglePassword')}
               >
                 <Ionicons
                   name={showPassword ? 'eye-outline' : 'eye-off-outline'}
@@ -133,7 +135,7 @@ const LoginScreen = ({ navigation }) => {
             style={styles.forgotPasswordContainer}
             onPress={handleForgotPassword}
           >
-            <Text style={[styles.forgotPasswordText, { color: colors.link }]}>Forgot password?</Text>
+            <Text style={[styles.forgotPasswordText, { color: colors.link }]}>{t('login.forgotPassword')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -147,7 +149,7 @@ const LoginScreen = ({ navigation }) => {
             disabled={!username || !password || isLoading}
           >
             <Text style={styles.submitButtonText}>
-              {isLoading ? 'Signing in...' : 'Submit'}
+              {isLoading ? t('login.signingIn') : t('common.submit')}
             </Text>
           </TouchableOpacity>
 
@@ -156,7 +158,7 @@ const LoginScreen = ({ navigation }) => {
             onPress={() => navigation.navigate('Register')}
           >
             <Text style={[styles.linkText, { color: colors.secondary }]}>
-              Don't have an account? <Text style={[styles.link, { color: colors.link }]}>Sign up for free.</Text>
+              {t('login.noAccount')}<Text style={[styles.link, { color: colors.link }]}>{t('login.signUpFree')}</Text>
             </Text>
           </TouchableOpacity>
         </View>

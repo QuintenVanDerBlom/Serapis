@@ -3,12 +3,14 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { authService } from '../services/authService';
 import { journeyService } from '../services/journeyService';
 import BottomNav from '../components/BottomNav';
 
 const MilestonesScreen = ({ navigation }) => {
   const { colors } = useTheme();
+  const { t } = useLanguage();
   const [milestones, setMilestones] = useState([]);
   const [points, setPoints] = useState(0);
 
@@ -34,31 +36,62 @@ const MilestonesScreen = ({ navigation }) => {
     };
   }, [navigation, loadData]);
 
+  const getMilestoneText = item => {
+    const normalizedTitle = String(item.title || '').toLowerCase();
+
+    if (normalizedTitle.includes('starter momentum')) {
+      return {
+        title: t('milestonesScreen.starterMomentumTitle'),
+        description: t('milestonesScreen.starterMomentumDescription'),
+      };
+    }
+
+    if (normalizedTitle.includes('consistency builder')) {
+      return {
+        title: t('milestonesScreen.consistencyBuilderTitle'),
+        description: t('milestonesScreen.consistencyBuilderDescription'),
+      };
+    }
+
+    if (normalizedTitle.includes('wellness champion')) {
+      return {
+        title: t('milestonesScreen.wellnessChampionTitle'),
+        description: t('milestonesScreen.wellnessChampionDescription'),
+      };
+    }
+
+    return {
+      title: item.title,
+      description: item.description,
+    };
+  };
+
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]}> 
       <View style={[styles.header, { borderBottomColor: colors.border }]}> 
         <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back to home" onPress={() => navigation?.goBack()}>
           <Ionicons name="arrow-back" size={22} color={colors.heading} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.heading }]}>Milestones</Text>
+        <Text style={[styles.headerTitle, { color: colors.heading }]}>{t('milestonesScreen.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={[styles.summaryCard, { backgroundColor: colors.heroBg }]}>
-          <Text style={[styles.summaryEyebrow, { color: colors.heroEyebrow }]}>Current points</Text>
+          <Text style={[styles.summaryEyebrow, { color: colors.heroEyebrow }]}>{t('milestonesScreen.currentPoints')}</Text>
           <Text style={[styles.summaryValue, { color: colors.heroText }]}>{points}</Text>
-          <Text style={[styles.summaryBody, { color: colors.heroDesc }]}>Complete tasks to unlock milestones and keep your streak of achievements growing.</Text>
+          <Text style={[styles.summaryBody, { color: colors.heroDesc }]}>{t('milestonesScreen.body')}</Text>
         </View>
 
         {milestones.map(item => {
           const progressPct = Math.min(100, Math.round((points / item.targetPoints) * 100));
+          const milestoneText = getMilestoneText(item);
           return (
             <View key={item.id} style={[styles.milestoneCard, { backgroundColor: colors.surfaceAlt }]}>
               <View style={styles.milestoneHeader}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.milestoneTitle, { color: colors.text }]}>{item.title}</Text>
-                  <Text style={[styles.milestoneBody, { color: colors.secondary }]}>{item.description}</Text>
+                  <Text style={[styles.milestoneTitle, { color: colors.text }]}>{milestoneText.title}</Text>
+                  <Text style={[styles.milestoneBody, { color: colors.secondary }]}>{milestoneText.description}</Text>
                 </View>
                 <View style={[styles.milestoneBadge, { backgroundColor: item.achieved ? colors.success : colors.border }]}>
                   <Ionicons
@@ -72,7 +105,7 @@ const MilestonesScreen = ({ navigation }) => {
                 <View style={[styles.progressBarFill, { width: `${progressPct}%`, backgroundColor: item.achieved ? colors.success : colors.accent }]} />
               </View>
               <View style={styles.milestoneFooter}>
-                <Text style={[styles.milestoneTarget, { color: colors.secondary }]}>{points}/{item.targetPoints} pts</Text>
+                <Text style={[styles.milestoneTarget, { color: colors.secondary }]}>{points}/{item.targetPoints} {t('common.pts')}</Text>
                 <Text style={[styles.milestonePct, { color: item.achieved ? colors.success : colors.accent }]}>{progressPct}%</Text>
               </View>
             </View>

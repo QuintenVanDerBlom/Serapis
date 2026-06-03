@@ -110,6 +110,8 @@ const mergeWithFallbackTasks = (storedTasks, templates) => {
 
     return {
       ...task,
+      instructions: task.instructions || '',
+      links: task.links || [],
       completed: Boolean(saved.completed),
       reminderEnabled: typeof saved.reminderEnabled === 'boolean' ? saved.reminderEnabled : task.reminderEnabled,
       completedAt: saved.completedAt || null,

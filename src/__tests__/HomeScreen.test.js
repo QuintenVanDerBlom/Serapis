@@ -88,7 +88,7 @@ describe('HomeScreen', () => {
     const navigation = createNavigation();
     const { getByLabelText } = render(<HomeScreen navigation={navigation} />);
 
-    fireEvent.press(getByLabelText('Open movement plan'));
+    fireEvent.press(getByLabelText('Open Tasks'));
 
     expect(navigation.navigate).toHaveBeenCalledWith('Tasks');
   });

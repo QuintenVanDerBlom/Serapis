@@ -14,7 +14,7 @@ jest.mock('../services/wellnessService', () => ({
     streakDays: 6,
     completedMissions: [],
     reminders: [
-      { key: 'hourly', label: 'Hourly movement reminder', enabled: true },
+      { key: 'hourly', label: 'Hourly wellness reminder', enabled: true },
       { key: 'water', label: 'Hydration reminder', enabled: true },
       { key: 'posture', label: 'Posture check reminder', enabled: false },
     ],
@@ -30,16 +30,16 @@ describe('WellnessScreen', () => {
     goBack: jest.fn(),
   });
 
-  it('renders movement missions and reminders sections', () => {
+  it('renders daily actions and reminders sections', () => {
     const navigation = createNavigation();
     const { getByText, getByLabelText } = render(
       <WellnessScreen navigation={navigation} />
     );
 
-    expect(getByText('Daily Missions')).toBeOnTheScreen();
+    expect(getByText('Daily Actions')).toBeOnTheScreen();
     expect(getByText('Reminder Settings')).toBeOnTheScreen();
-    expect(getByLabelText('Toggle mission 3-minute stretch')).toBeOnTheScreen();
-    expect(getByLabelText('Toggle Hourly movement reminder')).toBeOnTheScreen();
+    expect(getByLabelText('Toggle action 3-minute stretch')).toBeOnTheScreen();
+    expect(getByLabelText('Toggle Hourly wellness reminder')).toBeOnTheScreen();
   });
 
   it('updates mission progress when mission is toggled', () => {
@@ -48,9 +48,9 @@ describe('WellnessScreen', () => {
       <WellnessScreen navigation={navigation} />
     );
 
-    fireEvent.press(getByLabelText('Toggle mission 3-minute stretch'));
+    fireEvent.press(getByLabelText('Toggle action 3-minute stretch'));
 
-    expect(getByText('1/4 missions done')).toBeOnTheScreen();
+    expect(getByText('1/4 actions done')).toBeOnTheScreen();
     expect(getByText('25%')).toBeOnTheScreen();
   });
 

@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { authService } from '../services/authService';
 import { journeyService } from '../services/journeyService';
 import { onboardingService } from '../services/onboardingService';
@@ -46,13 +47,14 @@ const computeBestStreak = completedDateKeys => {
 };
 
 const SETTINGS_ITEMS = [
-  { key: 'notifications', label: 'Notifications', icon: 'notifications-outline' },
-  { key: 'privacy', label: 'Privacy', icon: 'lock-closed-outline' },
-  { key: 'about', label: 'About Serapis', icon: 'information-circle-outline' },
+  { key: 'notifications', labelKey: 'profile.notifications', icon: 'notifications-outline' },
+  { key: 'privacy', labelKey: 'profile.privacy', icon: 'lock-closed-outline' },
+  { key: 'about', labelKey: 'profile.aboutSerapis', icon: 'information-circle-outline' },
 ];
 
 const ProfileScreen = ({ navigation }) => {
   const { colors, isDark, toggleTheme } = useTheme();
+  const { t, language, setLanguage } = useLanguage();
   const [displayName, setDisplayName] = useState('Serapis User');
   const [stats, setStats] = useState({
     movePoints: 0,
@@ -100,12 +102,12 @@ const ProfileScreen = ({ navigation }) => {
 
   const handleRedoOnboarding = () => {
     Alert.alert(
-      'Redo Onboarding',
-      'This will let you update your feelings and accessibility preferences. Your progress will be kept.',
+      t('profile.redoOnboardingTitle'),
+      t('profile.redoOnboardingMessage'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Continue',
+          text: t('common.continue'),
           onPress: async () => {
             try {
               const { data: userData } = await authService.getCurrentUser();
@@ -113,7 +115,7 @@ const ProfileScreen = ({ navigation }) => {
               await onboardingService.clearProfile(userId);
               navigation?.reset({ index: 0, routes: [{ name: 'Onboarding' }] });
             } catch {
-              Alert.alert('Error', 'Could not reset onboarding');
+              Alert.alert(t('common.error'), t('profile.redoError'));
             }
           },
         },
@@ -140,7 +142,7 @@ const ProfileScreen = ({ navigation }) => {
         >
           <Ionicons name="arrow-back" size={22} color={colors.heading} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.heading }]}>Profile</Text>
+        <Text style={[styles.headerTitle, { color: colors.heading }]}>{t('profile.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -155,27 +157,27 @@ const ProfileScreen = ({ navigation }) => {
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
             <Text style={[styles.statValue, { color: colors.text }]}>{stats.movePoints}</Text>
-            <Text style={[styles.statLabel, { color: colors.secondary }]}>Move Points</Text>
+            <Text style={[styles.statLabel, { color: colors.secondary }]}>{t('profile.movePoints')}</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
             <Text style={[styles.statValue, { color: colors.text }]}>{stats.missionsDone}</Text>
-            <Text style={[styles.statLabel, { color: colors.secondary }]}>Missions Done</Text>
+            <Text style={[styles.statLabel, { color: colors.secondary }]}>{t('profile.missionsDone')}</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
             <Text style={[styles.statValue, { color: colors.text }]}>{stats.remindersKept}</Text>
-            <Text style={[styles.statLabel, { color: colors.secondary }]}>Reminders Kept</Text>
+            <Text style={[styles.statLabel, { color: colors.secondary }]}>{t('profile.remindersKept')}</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
-            <Text style={[styles.statValue, { color: colors.text }]}>{stats.bestStreakDays} days</Text>
-            <Text style={[styles.statLabel, { color: colors.secondary }]}>Best Streak</Text>
+            <Text style={[styles.statValue, { color: colors.text }]}>{stats.bestStreakDays} {t('common.days')}</Text>
+            <Text style={[styles.statLabel, { color: colors.secondary }]}>{t('profile.bestStreak')}</Text>
           </View>
         </View>
 
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('profile.settings')}</Text>
 
         <View style={[styles.settingRow, { backgroundColor: colors.surfaceAlt }]}>
           <Ionicons name="moon-outline" size={20} color={colors.accent} />
-          <Text style={[styles.settingLabel, { color: colors.text }]}>Dark Mode</Text>
+          <Text style={[styles.settingLabel, { color: colors.text }]}>{t('profile.darkMode')}</Text>
           <Switch
             value={isDark}
             onValueChange={toggleTheme}
@@ -185,6 +187,29 @@ const ProfileScreen = ({ navigation }) => {
           />
         </View>
 
+        <View style={[styles.settingRow, { backgroundColor: colors.surfaceAlt }]}>
+          <Ionicons name="language-outline" size={20} color={colors.accent} />
+          <Text style={[styles.settingLabel, { color: colors.text }]}>{t('profile.language')}</Text>
+          <View style={styles.languageToggle}>
+            <TouchableOpacity
+              style={[styles.langButton, language === 'en' && { backgroundColor: colors.accentLight }]}
+              onPress={() => setLanguage('en')}
+              accessibilityRole="button"
+              accessibilityLabel="Switch to English"
+            >
+              <Text style={[styles.langButtonText, { color: language === 'en' ? '#fff' : colors.text }]}>EN</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.langButton, language === 'nl' && { backgroundColor: colors.accentLight }]}
+              onPress={() => setLanguage('nl')}
+              accessibilityRole="button"
+              accessibilityLabel="Switch to Dutch"
+            >
+              <Text style={[styles.langButtonText, { color: language === 'nl' ? '#fff' : colors.text }]}>NL</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <TouchableOpacity
           style={[styles.settingRow, { backgroundColor: colors.surfaceAlt }]}
           accessibilityRole="button"
@@ -192,7 +217,7 @@ const ProfileScreen = ({ navigation }) => {
           onPress={handleRedoOnboarding}
         >
           <Ionicons name="refresh-outline" size={20} color={colors.accent} />
-          <Text style={[styles.settingLabel, { color: colors.text }]}>Update My Goals</Text>
+          <Text style={[styles.settingLabel, { color: colors.text }]}>{t('profile.updateGoals')}</Text>
           <Ionicons name="chevron-forward" size={16} color={colors.borderStrong} />
         </TouchableOpacity>
 
@@ -201,10 +226,10 @@ const ProfileScreen = ({ navigation }) => {
             key={item.key}
             style={[styles.settingRow, { backgroundColor: colors.surfaceAlt }]}
             accessibilityRole="button"
-            accessibilityLabel={item.label}
+            accessibilityLabel={t(item.labelKey)}
           >
             <Ionicons name={item.icon} size={20} color={colors.accent} />
-            <Text style={[styles.settingLabel, { color: colors.text }]}>{item.label}</Text>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>{t(item.labelKey)}</Text>
             <Ionicons name="chevron-forward" size={16} color={colors.borderStrong} />
           </TouchableOpacity>
         ))}
@@ -216,7 +241,7 @@ const ProfileScreen = ({ navigation }) => {
           onPress={handleLogout}
         >
           <Ionicons name="log-out-outline" size={18} color={colors.error} />
-          <Text style={[styles.logoutText, { color: colors.error }]}>Log out</Text>
+          <Text style={[styles.logoutText, { color: colors.error }]}>{t('profile.logOut')}</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -338,6 +363,19 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     fontSize: 14,
+    fontWeight: '700',
+  },
+  languageToggle: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  langButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  langButtonText: {
+    fontSize: 13,
     fontWeight: '700',
   },
 });

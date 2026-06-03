@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { authService } from '../services/authService';
 import { onboardingService, FEELING_OPTIONS, DISABILITY_OPTIONS } from '../services/onboardingService';
 
@@ -17,6 +18,7 @@ const TOTAL_STEPS = 3;
 
 const OnboardingScreen = ({ navigation }) => {
   const { colors } = useTheme();
+  const { t } = useLanguage();
   const [step, setStep] = useState(0);
   const [selectedFeelings, setSelectedFeelings] = useState([]);
   const [selectedDisabilities, setSelectedDisabilities] = useState({});
@@ -87,18 +89,22 @@ const OnboardingScreen = ({ navigation }) => {
     </View>
   );
 
+  const getOptionText = opt => ({
+    label: t(`onboarding.${opt.key}`),
+    description: t(`onboarding.${opt.key}Desc`),
+  });
+
   const renderWelcome = () => (
     <View style={styles.stepContent}>
       <View style={[styles.iconCircle, { backgroundColor: colors.accentBg }]}>
         <Ionicons name="heart-outline" size={48} color={colors.accent} />
       </View>
-      <Text style={[styles.stepTitle, { color: colors.heading }]}>Welcome to Serapis</Text>
+      <Text style={[styles.stepTitle, { color: colors.heading }]}>{t('onboarding.welcomeTitle')}</Text>
       <Text style={[styles.stepDescription, { color: colors.secondary }]}>
-        We are here to help you build small, healthy habits that fit your life. Let us personalise
-        your experience so every task feels relevant to you.
+        {t('onboarding.welcomeDescription')}
       </Text>
       <Text style={[styles.stepHint, { color: colors.muted }]}>
-        This takes less than a minute.
+        {t('onboarding.welcomeHint')}
       </Text>
     </View>
   );
@@ -106,15 +112,16 @@ const OnboardingScreen = ({ navigation }) => {
   const renderFeelings = () => (
     <View style={styles.stepContent}>
       <Text style={[styles.stepTitle, { color: colors.heading }]}>
-        What are you struggling with?
+        {t('onboarding.feelingsTitle')}
       </Text>
       <Text style={[styles.stepDescription, { color: colors.secondary }]}>
-        Select everything that applies. We will use this to pick the right daily tasks for you.
+        {t('onboarding.feelingsDescription')}
       </Text>
 
       <View style={styles.optionsList}>
         {FEELING_OPTIONS.map(opt => {
           const isSelected = selectedFeelings.includes(opt.key);
+          const optionText = getOptionText(opt);
           return (
             <TouchableOpacity
               key={opt.key}
@@ -126,7 +133,7 @@ const OnboardingScreen = ({ navigation }) => {
               onPress={() => toggleFeeling(opt.key)}
               accessibilityRole="checkbox"
               accessibilityState={{ checked: isSelected }}
-              accessibilityLabel={opt.label}
+              accessibilityLabel={optionText.label}
             >
               <View style={styles.optionRow}>
                 <View style={[styles.optionIconCircle, { backgroundColor: isSelected ? colors.accent : colors.border }]}>
@@ -137,9 +144,9 @@ const OnboardingScreen = ({ navigation }) => {
                   />
                 </View>
                 <View style={styles.optionTextCol}>
-                  <Text style={[styles.optionLabel, { color: colors.text }]}>{opt.label}</Text>
+                  <Text style={[styles.optionLabel, { color: colors.text }]}>{optionText.label}</Text>
                   <Text style={[styles.optionDesc, { color: colors.secondary }]}>
-                    {opt.description}
+                    {optionText.description}
                   </Text>
                 </View>
                 <Ionicons
@@ -158,16 +165,16 @@ const OnboardingScreen = ({ navigation }) => {
   const renderDisabilities = () => (
     <View style={styles.stepContent}>
       <Text style={[styles.stepTitle, { color: colors.heading }]}>
-        Any physical limitations?
+        {t('onboarding.disabilitiesTitle')}
       </Text>
       <Text style={[styles.stepDescription, { color: colors.secondary }]}>
-        This helps us choose appropriate tasks. We will never give you a task that does not suit
-        your abilities. You can skip this step if it does not apply.
+        {t('onboarding.disabilitiesDescription')}
       </Text>
 
       <View style={styles.optionsList}>
         {DISABILITY_OPTIONS.map(opt => {
           const isSelected = Boolean(selectedDisabilities[opt.key]);
+          const optionText = getOptionText(opt);
           return (
             <TouchableOpacity
               key={opt.key}
@@ -179,13 +186,13 @@ const OnboardingScreen = ({ navigation }) => {
               onPress={() => toggleDisability(opt.key)}
               accessibilityRole="checkbox"
               accessibilityState={{ checked: isSelected }}
-              accessibilityLabel={opt.label}
+              accessibilityLabel={optionText.label}
             >
               <View style={styles.optionRow}>
                 <View style={styles.optionTextCol}>
-                  <Text style={[styles.optionLabel, { color: colors.text }]}>{opt.label}</Text>
+                  <Text style={[styles.optionLabel, { color: colors.text }]}>{optionText.label}</Text>
                   <Text style={[styles.optionDesc, { color: colors.secondary }]}>
-                    {opt.description}
+                    {optionText.description}
                   </Text>
                 </View>
                 <Ionicons
@@ -248,7 +255,7 @@ const OnboardingScreen = ({ navigation }) => {
             >
               <Ionicons name="checkmark-done-outline" size={18} color="#fff" />
               <Text style={styles.primaryButtonText}>
-                {saving ? 'Saving...' : 'Start Your Journey'}
+                {saving ? t('onboarding.saving') : t('onboarding.startJourney')}
               </Text>
             </TouchableOpacity>
           ) : (
@@ -263,7 +270,7 @@ const OnboardingScreen = ({ navigation }) => {
               accessibilityRole="button"
               accessibilityLabel="Continue"
             >
-              <Text style={styles.primaryButtonText}>Continue</Text>
+              <Text style={styles.primaryButtonText}>{t('common.continue')}</Text>
               <Ionicons name="arrow-forward" size={18} color="#fff" />
             </TouchableOpacity>
           )}

@@ -11,20 +11,22 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { authService } from '../services/authService';
 import { DEFAULT_WELLNESS_STATE, wellnessService } from '../services/wellnessService';
 import { notificationService } from '../services/notificationService';
 import BottomNav from '../components/BottomNav';
 
 const MISSIONS = [
-  { key: 'stretch', title: '3-minute stretch', xp: 60, icon: 'body-outline' },
-  { key: 'steps', title: '800 steps', xp: 120, icon: 'footsteps-outline' },
-  { key: 'water', title: 'Hydrate break', xp: 40, icon: 'water-outline' },
-  { key: 'posture', title: 'Desk posture reset', xp: 50, icon: 'accessibility-outline' },
+  { key: 'stretch', titleKey: 'wellness.stretch', xp: 60, icon: 'body-outline' },
+  { key: 'steps', titleKey: 'wellness.steps', xp: 120, icon: 'footsteps-outline' },
+  { key: 'water', titleKey: 'wellness.water', xp: 40, icon: 'water-outline' },
+  { key: 'posture', titleKey: 'wellness.posture', xp: 50, icon: 'accessibility-outline' },
 ];
 
 const WellnessScreen = ({ navigation }) => {
   const { colors } = useTheme();
+  const { t } = useLanguage();
   const [completedMissions, setCompletedMissions] = useState(DEFAULT_WELLNESS_STATE.completedMissions);
   const [streakDays, setStreakDays] = useState(DEFAULT_WELLNESS_STATE.streakDays);
   const [points, setPoints] = useState(DEFAULT_WELLNESS_STATE.points);
@@ -106,6 +108,13 @@ const WellnessScreen = ({ navigation }) => {
     setStreakDays(prev => prev + 1);
   };
 
+  const getReminderLabel = reminder => {
+    if (reminder.key === 'hourly') return t('wellness.hourlyReminder');
+    if (reminder.key === 'water') return t('wellness.hydrationReminder');
+    if (reminder.key === 'posture') return t('wellness.postureReminder');
+    return reminder.label;
+  };
+
   const missionsDone = completedMissions.length;
   const missionsTotal = MISSIONS.length;
   const progressPct = Math.round((missionsDone / missionsTotal) * 100);
@@ -120,58 +129,59 @@ const WellnessScreen = ({ navigation }) => {
         >
           <Ionicons name="arrow-back" size={22} color={colors.heading} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.heading }]}>Wellness</Text>
+        <Text style={[styles.headerTitle, { color: colors.heading }]}>{t('wellness.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.heroCard, { backgroundColor: colors.heroBg }]}> 
-          <Text style={[styles.heroEyebrow, { color: colors.heroEyebrow }]}>Movement Engine</Text>
-          <Text style={[styles.heroTitle, { color: colors.heroText }]}>Keep your body in motion</Text>
+          <Text style={[styles.heroEyebrow, { color: colors.heroEyebrow }]}>{t('wellness.eyebrow')}</Text>
+          <Text style={[styles.heroTitle, { color: colors.heroText }]}>{t('wellness.heroTitle')}</Text>
           <Text style={[styles.heroSubtitle, { color: colors.heroDesc }]}> 
-            Smart reminders and missions help you move consistently throughout the day.
+            {t('wellness.heroSubtitle')}
           </Text>
         </View>
 
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
             <Text style={[styles.statValue, { color: colors.text }]}>{points}</Text>
-            <Text style={[styles.statLabel, { color: colors.secondary }]}>Move points</Text>
+            <Text style={[styles.statLabel, { color: colors.secondary }]}>{t('wellness.movePoints')}</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
-            <Text style={[styles.statValue, { color: colors.text }]}>{streakDays} days</Text>
-            <Text style={[styles.statLabel, { color: colors.secondary }]}>Active streak</Text>
+            <Text style={[styles.statValue, { color: colors.text }]}>{streakDays} {t('common.days')}</Text>
+            <Text style={[styles.statLabel, { color: colors.secondary }]}>{t('wellness.activeStreak')}</Text>
           </View>
         </View>
 
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Daily Missions</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('wellness.dailyMissions')}</Text>
         <Text style={[styles.sectionSubtitle, { color: colors.secondary }]}> 
-          Complete small movement tasks to earn points.
+          {t('wellness.missionsSubtitle')}
         </Text>
 
         <View style={[styles.progressCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
           <View style={styles.progressRow}>
-            <Text style={[styles.progressTitle, { color: colors.text }]}>Today's completion</Text>
+            <Text style={[styles.progressTitle, { color: colors.text }]}>{t('wellness.todaysCompletion')}</Text>
             <Text style={[styles.progressValue, { color: colors.accent }]}>{progressPct}%</Text>
           </View>
           <Text style={[styles.progressSub, { color: colors.secondary }]}>
-            {missionsDone}/{missionsTotal} missions done
+            {missionsDone}/{missionsTotal} {t('wellness.missionsDone')}
           </Text>
         </View>
 
         {MISSIONS.map(mission => {
           const done = completedMissions.includes(mission.key);
+          const missionTitle = t(mission.titleKey);
           return (
             <TouchableOpacity
               key={mission.key}
               style={[styles.missionRow, { backgroundColor: colors.surfaceAlt }]}
               accessibilityRole="button"
-              accessibilityLabel={`Toggle mission ${mission.title}`}
+              accessibilityLabel={`Toggle action ${missionTitle}`}
               onPress={() => toggleMission(mission)}
             >
               <View style={styles.missionLeft}>
                 <Ionicons name={mission.icon} size={20} color={done ? colors.success : colors.accent} />
-                <Text style={[styles.missionTitle, { color: colors.text }]}>{mission.title}</Text>
+                <Text style={[styles.missionTitle, { color: colors.text }]}>{missionTitle}</Text>
               </View>
               <View style={styles.missionRight}>
                 <Text style={[styles.missionXp, { color: colors.secondary }]}>+{mission.xp} XP</Text>
@@ -181,18 +191,18 @@ const WellnessScreen = ({ navigation }) => {
           );
         })}
 
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Reminder Settings</Text>
-        <Text style={[styles.sectionSubtitle, { color: colors.secondary }]}>Turn reminders on to keep moving during the day.</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('wellness.reminderSettings')}</Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.secondary }]}>{t('wellness.reminderSubtitle')}</Text>
 
         {reminders.map(reminder => (
           <View key={reminder.key} style={[styles.reminderRow, { backgroundColor: colors.surfaceAlt }]}> 
-            <Text style={[styles.reminderLabel, { color: colors.text }]}>{reminder.label}</Text>
+            <Text style={[styles.reminderLabel, { color: colors.text }]}>{getReminderLabel(reminder)}</Text>
             <Switch
               value={reminder.enabled}
               onValueChange={() => toggleReminder(reminder.key)}
               trackColor={{ false: colors.border, true: colors.accentLight }}
               thumbColor={colors.surface}
-              accessibilityLabel={`Toggle ${reminder.label}`}
+              accessibilityLabel={`Toggle ${getReminderLabel(reminder)}`}
             />
           </View>
         ))}
@@ -204,7 +214,7 @@ const WellnessScreen = ({ navigation }) => {
           onPress={handleTestNotification}
         >
           <Ionicons name="notifications-outline" size={16} color="#fff" />
-          <Text style={styles.testButtonText}>Send test notification</Text>
+          <Text style={styles.testButtonText}>{t('wellness.sendTest')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -214,13 +224,13 @@ const WellnessScreen = ({ navigation }) => {
           onPress={completeDay}
         >
           <Ionicons name="flame-outline" size={16} color="#fff" />
-          <Text style={styles.streakButtonText}>Mark day complete</Text>
+          <Text style={styles.streakButtonText}>{t('wellness.markDayComplete')}</Text>
         </TouchableOpacity>
 
         <View style={[styles.tipCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
-          <Text style={[styles.tipTitle, { color: colors.text }]}>Coach Tip</Text>
+          <Text style={[styles.tipTitle, { color: colors.text }]}>{t('wellness.coachTip')}</Text>
           <Text style={[styles.tipText, { color: colors.secondary }]}> 
-            Pair reminders with existing habits: move each time you finish a meeting or task block.
+            {t('wellness.coachTipText')}
           </Text>
         </View>
       </ScrollView>

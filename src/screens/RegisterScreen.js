@@ -12,10 +12,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { authService } from '../services/authService';
 
 const RegisterScreen = ({ navigation }) => {
   const { colors } = useTheme();
+  const { t } = useLanguage();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -29,10 +31,10 @@ const RegisterScreen = ({ navigation }) => {
     const hasSpecialChar = /[!&_?*@]/.test(password);
     
     if (!hasNumber || !hasLetter || !hasSpecialChar) {
-      return 'Error: password must contain at least 1 number, 1 letter, and a special character (!&_?*)';
+      return t('register.passwordMustContain');
     }
     if (password.length < 8) {
-      return 'Error: password must be at least 8 characters long';
+      return t('register.passwordMinLength');
     }
     return '';
   };
@@ -41,11 +43,11 @@ const RegisterScreen = ({ navigation }) => {
     const normalized = rawUsername.trim().toLowerCase();
 
     if (!normalized) {
-      return 'Please enter a username';
+      return t('register.enterUsername');
     }
 
     if (!/^[a-z0-9._-]{3,30}$/.test(normalized)) {
-      return 'Username must be 3-30 chars and can only contain letters, numbers, dot (.), underscore (_), or dash (-).';
+      return t('register.usernameRules');
     }
 
     return '';
@@ -59,23 +61,23 @@ const RegisterScreen = ({ navigation }) => {
   const handleRegister = async () => {
     const usernameError = validateUsername(username);
     if (usernameError) {
-      Alert.alert('Error', usernameError);
+      Alert.alert(t('common.error'), usernameError);
       return;
     }
 
     const validationError = validatePassword(password);
     if (validationError) {
-      Alert.alert('Error', validationError);
+      Alert.alert(t('common.error'), validationError);
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      Alert.alert(t('common.error'), t('register.passwordsNoMatch'));
       return;
     }
 
     if (!acceptedTerms) {
-      Alert.alert('Error', 'Please accept the Terms & Conditions');
+      Alert.alert(t('common.error'), t('register.acceptTerms'));
       return;
     }
 
@@ -89,24 +91,24 @@ const RegisterScreen = ({ navigation }) => {
         const message = error.message?.toLowerCase() || '';
 
         if (message.includes('not configured')) {
-          Alert.alert('Error', 'Supabase is not configured. Check EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY.');
+          Alert.alert(t('common.error'), t('login.supabaseNotConfigured'));
           return;
         }
 
         if (message.includes('user already registered') || message.includes('already been registered')) {
-          Alert.alert('Error', 'Username already exists');
+          Alert.alert(t('common.error'), t('register.usernameExists'));
           return;
         }
 
-        Alert.alert('Error', error.message || 'Failed to create account');
+        Alert.alert(t('common.error'), error.message || t('register.failedCreate'));
         return;
       }
       
-      Alert.alert('Success', 'Account created successfully!', [
-        { text: 'OK', onPress: () => navigation.navigate(data?.session ? 'Onboarding' : 'Login') }
+      Alert.alert(t('common.success'), t('register.accountCreated'), [
+        { text: t('common.ok'), onPress: () => navigation.navigate(data?.session ? 'Onboarding' : 'Login') }
       ]);
     } catch (error) {
-      Alert.alert('Error', 'Failed to create account');
+      Alert.alert(t('common.error'), t('register.failedCreate'));
       console.error('Registration error:', error);
     }
   };
@@ -119,29 +121,29 @@ const RegisterScreen = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.content}>
           <Text style={[styles.brand, { color: colors.accent }]}>Serapis</Text>
-          <Text style={[styles.title, { color: colors.heading }]}>Sign up</Text>
-          <Text style={[styles.subtitle, { color: colors.muted }]}>Create a free account.</Text>
+          <Text style={[styles.title, { color: colors.heading }]}>{t('register.signUp')}</Text>
+          <Text style={[styles.subtitle, { color: colors.muted }]}>{t('register.subtitle')}</Text>
 
           <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: colors.accent }]}>username</Text>
+            <Text style={[styles.inputLabel, { color: colors.accent }]}>{t('register.username')}</Text>
             <TextInput
               style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.text }]}
               value={username}
               onChangeText={setUsername}
-              placeholder="guest_user"
+              placeholder={t('login.usernamePlaceholder')}
               placeholderTextColor={colors.placeholder}
               autoCapitalize="none"
             />
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: colors.accent }]}>password</Text>
+            <Text style={[styles.inputLabel, { color: colors.accent }]}>{t('register.password')}</Text>
             <View style={[styles.passwordContainer, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }, passwordError ? { borderColor: colors.errorInput, borderWidth: 2, backgroundColor: colors.errorInputBg } : null]}>
               <TextInput
                 style={[styles.passwordInput, { color: colors.text }]}
                 value={password}
                 onChangeText={handlePasswordChange}
-                placeholder="Enter password"
+                placeholder={t('login.passwordPlaceholder')}
                 placeholderTextColor={colors.placeholder}
                 secureTextEntry={!showPassword}
               />
@@ -164,13 +166,13 @@ const RegisterScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={[styles.inputLabel, { color: colors.accent }]}>confirm password</Text>
+            <Text style={[styles.inputLabel, { color: colors.accent }]}>{t('register.confirmPassword')}</Text>
             <View style={[styles.passwordContainer, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
               <TextInput
                 style={[styles.passwordInput, { color: colors.text }]}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
-                placeholder="Confirm password"
+                placeholder={t('register.confirmPlaceholder')}
                 placeholderTextColor={colors.placeholder}
                 secureTextEntry={!showPassword}
               />
@@ -202,8 +204,8 @@ const RegisterScreen = ({ navigation }) => {
               </View>
             </TouchableOpacity>
             <Text style={[styles.checkboxText, { color: colors.secondary }]}>
-              By checking this box, you agree to our{' '}
-              <Text style={[styles.link, { color: colors.link }]}>Terms & Conditions</Text>
+              {t('register.termsCheckbox')}
+              <Text style={[styles.link, { color: colors.link }]}>{t('register.termsLink')}</Text>
             </Text>
           </View>
 
@@ -217,7 +219,7 @@ const RegisterScreen = ({ navigation }) => {
             onPress={handleRegister}
             disabled={!username || !password || !confirmPassword || !acceptedTerms || !!passwordError}
           >
-            <Text style={styles.submitButtonText}>Submit</Text>
+            <Text style={styles.submitButtonText}>{t('common.submit')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -225,7 +227,7 @@ const RegisterScreen = ({ navigation }) => {
             onPress={() => navigation.navigate('Login')}
           >
             <Text style={[styles.linkText, { color: colors.secondary }]}>
-              Already have an account? <Text style={[styles.link, { color: colors.link }]}>Log in here</Text>
+              {t('register.alreadyHaveAccount')}<Text style={[styles.link, { color: colors.link }]}>{t('register.logInHere')}</Text>
             </Text>
           </TouchableOpacity>
         </View>

@@ -95,6 +95,12 @@ jest.mock('../screens/OnboardingScreen', () => {
   return () => React.createElement(Text, null, 'Onboarding Screen');
 });
 
+jest.mock('../screens/TaskDetailScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return () => React.createElement(Text, null, 'Task Detail Screen');
+});
+
 describe('AppNavigator', () => {
   beforeEach(() => {
     jest.clearAllMocks();

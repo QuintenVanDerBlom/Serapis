@@ -42,7 +42,7 @@ describe('ProfileScreen', () => {
     });
 
     expect(getByText('75')).toBeOnTheScreen();
-    expect(getByText('Move Points')).toBeOnTheScreen();
+    expect(getByText('Wellness Points')).toBeOnTheScreen();
   });
 
   it('renders settings items', () => {

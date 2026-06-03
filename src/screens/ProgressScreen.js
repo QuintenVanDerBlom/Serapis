@@ -3,12 +3,14 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { authService } from '../services/authService';
 import { journeyService } from '../services/journeyService';
 import BottomNav from '../components/BottomNav';
 
 const ProgressScreen = ({ navigation }) => {
   const { colors } = useTheme();
+  const { t } = useLanguage();
   const [monthlyRows, setMonthlyRows] = useState([]);
 
   const loadData = useCallback(async () => {
@@ -38,36 +40,36 @@ const ProgressScreen = ({ navigation }) => {
         >
           <Ionicons name="arrow-back" size={22} color={colors.heading} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.heading }]}>Progress</Text>
+        <Text style={[styles.headerTitle, { color: colors.heading }]}>{t('progressScreen.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={[styles.card, { backgroundColor: colors.heroBg }]}>
-          <Text style={[styles.cardEyebrow, { color: colors.heroEyebrow }]}>Monthly Overview</Text>
-          <Text style={[styles.cardTitle, { color: colors.heroText }]}>Track your momentum over time</Text>
-          <Text style={[styles.cardBody, { color: colors.heroDesc }]}>You can monitor completed tasks, earned points, and active days for each month.</Text>
+          <Text style={[styles.cardEyebrow, { color: colors.heroEyebrow }]}>{t('progressScreen.eyebrow')}</Text>
+          <Text style={[styles.cardTitle, { color: colors.heroText }]}>{t('progressScreen.heading')}</Text>
+          <Text style={[styles.cardBody, { color: colors.heroDesc }]}>{t('progressScreen.body')}</Text>
         </View>
 
         {monthlyRows.length === 0 ? (
           <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>No monthly progress yet</Text>
-            <Text style={[styles.emptyBody, { color: colors.secondary }]}>Complete tasks from the Tasks page and your monthly stats will appear here.</Text>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('progressScreen.emptyTitle')}</Text>
+            <Text style={[styles.emptyBody, { color: colors.secondary }]}>{t('progressScreen.emptyBody')}</Text>
           </View>
         ) : (
           monthlyRows.map(row => (
             <View key={row.monthKey} style={[styles.rowCard, { backgroundColor: colors.surfaceAlt }]}> 
               <Text style={[styles.month, { color: colors.text }]}>{row.monthKey}</Text>
               <View style={styles.statRow}>
-                <Text style={[styles.statLabel, { color: colors.secondary }]}>Completed tasks</Text>
+                <Text style={[styles.statLabel, { color: colors.secondary }]}>{t('progressScreen.completedTasks')}</Text>
                 <Text style={[styles.statValue, { color: colors.text }]}>{row.completedTasks}</Text>
               </View>
               <View style={styles.statRow}>
-                <Text style={[styles.statLabel, { color: colors.secondary }]}>Points earned</Text>
+                <Text style={[styles.statLabel, { color: colors.secondary }]}>{t('progressScreen.pointsEarned')}</Text>
                 <Text style={[styles.statValue, { color: colors.text }]}>{row.earnedPoints}</Text>
               </View>
               <View style={styles.statRow}>
-                <Text style={[styles.statLabel, { color: colors.secondary }]}>Active days</Text>
+                <Text style={[styles.statLabel, { color: colors.secondary }]}>{t('progressScreen.activeDays')}</Text>
                 <Text style={[styles.statValue, { color: colors.text }]}>{row.activeDays}</Text>
               </View>
             </View>

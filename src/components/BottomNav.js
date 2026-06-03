@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const ITEMS = [
   { key: 'home', label: 'Home', icon: 'home-outline', activeIcon: 'home', route: 'Home' },
@@ -13,6 +14,7 @@ const ITEMS = [
 
 const BottomNav = ({ navigation, activeKey }) => {
   const { colors } = useTheme();
+  const { t } = useLanguage();
 
   return (
     <View style={[styles.bottomNav, { backgroundColor: colors.navBg, borderTopColor: colors.border }]}>
@@ -27,7 +29,7 @@ const BottomNav = ({ navigation, activeKey }) => {
             onPress={() => navigation?.navigate(item.route)}
           >
             <Ionicons name={active ? item.activeIcon : item.icon} size={22} color={active ? colors.accent : colors.navIcon} />
-            <Text style={[styles.navLabel, { color: active ? colors.accent : colors.navIcon }]}>{item.label}</Text>
+            <Text style={[styles.navLabel, { color: active ? colors.accent : colors.navIcon }]}>{t(`nav.${item.key}`)}</Text>
           </TouchableOpacity>
         );
       })}

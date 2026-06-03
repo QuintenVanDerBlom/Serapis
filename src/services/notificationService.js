@@ -65,7 +65,7 @@ export const notificationService = {
     _listener({
       key: '_test',
       title: '✅ Notifications work!',
-      body: 'You will receive movement reminders when they are enabled.',
+      body: 'You will receive wellness reminders when they are enabled.',
     });
   },
 

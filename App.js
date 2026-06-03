@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { View, StyleSheet } from 'react-native';
 import AppNavigator from './src/navigation/AppNavigator';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
+import { LanguageProvider } from './src/context/LanguageContext';
 import ReminderBanner from './src/components/ReminderBanner';
 import { pushNotificationService } from './src/services/pushNotificationService';
 import { screenTimeService } from './src/services/screenTimeService';
@@ -55,8 +56,10 @@ const styles = StyleSheet.create({
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
+    <LanguageProvider>
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
+    </LanguageProvider>
   );
 }
