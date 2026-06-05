@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { hasSupabaseConfig, supabase } from './supabaseClient';
 import { onboardingService } from './onboardingService';
 import { locationService } from './locationService';
-import { buildDailyTasks } from '../data/taskCatalog';
+import { taskCatalogService } from './taskCatalogService';
 
 const toMonthKey = date => {
   const year = date.getFullYear();
@@ -32,7 +32,8 @@ const getPersonalizedTemplates = async userId => {
       return null;
     }
     const isInRotterdam = await locationService.isInRotterdam();
-    return buildDailyTasks(profile, isInRotterdam);
+    const { data: tasks } = await taskCatalogService.buildDailyTasks(userId, profile, isInRotterdam);
+    return tasks;
   } catch {
     return null;
   }
@@ -351,6 +352,17 @@ export const journeyService = {
       .update({ reminder_enabled: reminderEnabled, updated_at: new Date().toISOString() })
       .eq('id', taskId);
 
+    // Also save to local storage as backup
+    if (!error) {
+      const localTasks = await loadLocalTasks(userId);
+      const nextTasks = localTasks.map(task =>
+        task.id === taskId
+          ? { ...task, reminderEnabled, lastNotifiedAt: new Date().toISOString() }
+          : task,
+      );
+      await saveLocalTasks(userId, nextTasks);
+    }
+
     return { error };
   },
 
@@ -425,6 +437,32 @@ export const journeyService = {
       .upsert(next, { onConflict: 'user_id,month_key' });
 
     if (upsertError) return { error: upsertError };
+
+    // Save to local storage as backup
+    const localTasks = await loadLocalTasks(userId);
+    const nextLocalTasks = localTasks.map(item =>
+      item.id === task.id
+        ? { ...item, completed: Boolean(completed), completedAt: completed ? nowIso : null }
+        : item,
+    );
+    await saveLocalTasks(userId, nextLocalTasks);
+
+    // Also save progress locally as backup
+    const existingLocalProgress = await loadLocalProgress(userId, monthKey);
+    const todayKey = toDateKey(nowIso);
+    const dayCounts = { ...(existingLocalProgress?.dayCounts || {}) };
+    const nextCountForToday = Math.max(0, (dayCounts[todayKey] || 0) + (completed ? 1 : -1));
+    if (nextCountForToday > 0) {
+      dayCounts[todayKey] = nextCountForToday;
+    } else {
+      delete dayCounts[todayKey];
+    }
+    await saveLocalProgress(userId, {
+      monthKey,
+      completedTasks: next.completed_tasks,
+      earnedPoints: next.earned_points,
+      dayCounts,
+    });
 
     await this.updateMilestonesByPoints(userId, next.earned_points);
 
@@ -551,6 +589,54 @@ export const journeyService = {
         .from('user_milestones')
         .update({ achieved: true, achieved_at: new Date().toISOString() })
         .eq('id', m.id);
+    }
+  },
+
+  // Sync all local data to Supabase (call when coming back online)
+  async syncLocalToSupabase(userId) {
+    if (!hasSupabaseConfig || !supabase || !userId) return;
+
+    try {
+      // Sync tasks
+      const localTasks = await loadLocalTasks(userId);
+      if (localTasks.length > 0) {
+        const supabaseTasks = localTasks
+          .filter(task => !isLocalTaskId(task.id))
+          .map(task => ({
+            id: task.id,
+            user_id: userId,
+            title: task.title,
+            category: task.category,
+            points: task.points,
+            completed: task.completed,
+            reminder_enabled: task.reminderEnabled,
+            completed_at: task.completedAt,
+            last_notified_at: task.lastNotifiedAt,
+            updated_at: new Date().toISOString(),
+          }));
+
+        if (supabaseTasks.length > 0) {
+          for (const task of supabaseTasks) {
+            await supabase.from('user_tasks').upsert(task, { onConflict: 'id' });
+          }
+        }
+      }
+
+      // Sync progress
+      const monthKey = toMonthKey(new Date());
+      const localProgress = await loadLocalProgress(userId, monthKey);
+      if (localProgress) {
+        await supabase.from('user_monthly_progress').upsert({
+          user_id: userId,
+          month_key: monthKey,
+          completed_tasks: localProgress.completedTasks,
+          earned_points: localProgress.earnedPoints,
+          active_days: Object.keys(localProgress.dayCounts || {}).length,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,month_key' });
+      }
+    } catch (e) {
+      console.warn('Sync to Supabase failed:', e.message);
     }
   },
 };

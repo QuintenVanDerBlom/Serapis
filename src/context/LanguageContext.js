@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { userPreferencesService } from '../services/userPreferencesService';
 import en from '../i18n/en';
 import nl from '../i18n/nl';
 
@@ -24,22 +25,36 @@ const LanguageContext = createContext({
   tTask: (task, field) => task?.[field] || '',
 });
 
-export const LanguageProvider = ({ children }) => {
+export const LanguageProvider = ({ children, userId }) => {
   const [language, setLanguageState] = useState('en');
 
   useEffect(() => {
+    // Load from local storage first for immediate UI
     AsyncStorage.getItem(STORAGE_KEY)
       .then(val => {
         if (val === 'nl') setLanguageState('nl');
       })
       .catch(() => {});
-  }, []);
+
+    // Then try to sync from Supabase if userId is available
+    if (userId) {
+      userPreferencesService.getLanguage(userId)
+        .then(lang => {
+          setLanguageState(lang);
+        })
+        .catch(() => {});
+    }
+  }, [userId]);
 
   const setLanguage = useCallback((lang) => {
     const next = lang === 'nl' ? 'nl' : 'en';
     setLanguageState(next);
+    // Save to both local and Supabase (if userId available)
     AsyncStorage.setItem(STORAGE_KEY, next).catch(() => {});
-  }, []);
+    if (userId) {
+      userPreferencesService.saveLanguage(userId, next).catch(() => {});
+    }
+  }, [userId]);
 
   const t = useCallback((key) => {
     const dict = translations[language] || translations.en;

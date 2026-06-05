@@ -92,10 +92,6 @@ const TasksScreen = ({ navigation }) => {
     await reload(userId);
   };
 
-  const sendTestNotification = () => {
-    notificationService.sendTestNotification();
-  };
-
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg }]}> 
       <View style={[styles.header, { borderBottomColor: colors.border }]}> 
@@ -111,16 +107,6 @@ const TasksScreen = ({ navigation }) => {
           <Text style={[styles.infoTitle, { color: colors.text }]}>{t('tasksScreen.infoTitle')}</Text>
           <Text style={[styles.infoBody, { color: colors.secondary }]}>{t('tasksScreen.infoBody')}</Text>
         </View>
-
-        <TouchableOpacity
-          style={[styles.testButton, { backgroundColor: colors.accentLight }]}
-          onPress={sendTestNotification}
-          accessibilityRole="button"
-          accessibilityLabel="Send test notification"
-        >
-          <Ionicons name="notifications-outline" size={16} color="#fff" />
-          <Text style={styles.testButtonText}>{t('tasksScreen.sendTestNotification')}</Text>
-        </TouchableOpacity>
 
         {tasks.map(task => (
           <TouchableOpacity

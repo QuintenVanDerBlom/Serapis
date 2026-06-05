@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { userPreferencesService } from '../services/userPreferencesService';
 
 const STORAGE_KEY = '@serapis_dark_mode';
 
@@ -141,24 +142,38 @@ const ThemeContext = createContext({
   toggleTheme: () => {},
 });
 
-export const ThemeProvider = ({ children }) => {
+export const ThemeProvider = ({ children, userId }) => {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
+    // Load from local storage first for immediate UI
     AsyncStorage.getItem(STORAGE_KEY)
       .then(val => {
         if (val === 'true') setIsDark(true);
       })
       .catch(() => {});
-  }, []);
+
+    // Then try to sync from Supabase if userId is available
+    if (userId) {
+      userPreferencesService.getDarkMode(userId)
+        .then(darkMode => {
+          setIsDark(darkMode);
+        })
+        .catch(() => {});
+    }
+  }, [userId]);
 
   const toggleTheme = useCallback(() => {
     setIsDark(prev => {
       const next = !prev;
+      // Save to both local and Supabase (if userId available)
       AsyncStorage.setItem(STORAGE_KEY, String(next)).catch(() => {});
+      if (userId) {
+        userPreferencesService.saveDarkMode(userId, next).catch(() => {});
+      }
       return next;
     });
-  }, []);
+  }, [userId]);
 
   const value = {
     colors: isDark ? darkColors : lightColors,

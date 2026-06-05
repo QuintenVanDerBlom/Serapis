@@ -16,6 +16,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { authService } from '../services/authService';
 import { journeyService } from '../services/journeyService';
 import { onboardingService } from '../services/onboardingService';
+import { userPreferencesService } from '../services/userPreferencesService';
 import BottomNav from '../components/BottomNav';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -64,6 +65,14 @@ const ProfileScreen = ({ navigation }) => {
     bestStreakDays: 0,
   });
   const [showRedoModal, setShowRedoModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+  const [notificationSettings, setNotificationSettings] = useState({
+    dailyReminders: true,
+    streakAlerts: true,
+    achievementAlerts: true,
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -74,9 +83,10 @@ const ProfileScreen = ({ navigation }) => {
       const userId = user.id || 'guest';
       const username = user.username || 'Serapis User';
 
-      const [{ data: tasks }, { data: progress }] = await Promise.all([
+      const [{ data: tasks }, { data: progress }, notifSettings] = await Promise.all([
         journeyService.getTasks(userId),
         journeyService.getMonthlyProgress(userId),
+        userPreferencesService.getNotificationSettings(userId),
       ]);
 
       if (!mounted) return;
@@ -91,6 +101,7 @@ const ProfileScreen = ({ navigation }) => {
         remindersKept: completedTasks.filter(task => task.reminderEnabled).length,
         bestStreakDays: computeBestStreak(completedDateKeys),
       });
+      setNotificationSettings(notifSettings);
     };
 
     loadProfileData();
@@ -104,6 +115,28 @@ const ProfileScreen = ({ navigation }) => {
 
   const handleRedoOnboarding = () => {
     setShowRedoModal(true);
+  };
+
+  const handleSettingPress = (key) => {
+    if (key === 'privacy') {
+      setShowPrivacyModal(true);
+    } else if (key === 'about') {
+      setShowAboutModal(true);
+    } else if (key === 'notifications') {
+      setShowNotificationsModal(true);
+    }
+  };
+
+  const toggleNotificationSetting = async (key) => {
+    const next = { ...notificationSettings, [key]: !notificationSettings[key] };
+    setNotificationSettings(next);
+
+    // Save to Supabase (with local backup)
+    const { data: userData } = await authService.getCurrentUser();
+    const userId = userData?.user?.id;
+    if (userId) {
+      await userPreferencesService.saveNotificationSettings(userId, next);
+    }
   };
 
   const confirmRedoOnboarding = async () => {
@@ -222,6 +255,7 @@ const ProfileScreen = ({ navigation }) => {
             style={[styles.settingRow, { backgroundColor: colors.surfaceAlt }]}
             accessibilityRole="button"
             accessibilityLabel={t(item.labelKey)}
+            onPress={() => handleSettingPress(item.key)}
           >
             <Ionicons name={item.icon} size={20} color={colors.accent} />
             <Text style={[styles.settingLabel, { color: colors.text }]}>{t(item.labelKey)}</Text>
@@ -271,6 +305,166 @@ const ProfileScreen = ({ navigation }) => {
                 <Text style={styles.modalButtonTextConfirm}>{t('common.continue')}</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showPrivacyModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowPrivacyModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.privacyModalContent, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={styles.privacyHeader}>
+              <Ionicons name="lock-closed-outline" size={28} color={colors.accent} />
+              <Text style={[styles.privacyTitle, { color: colors.text }]}>{t('profile.privacyTitle')}</Text>
+              <TouchableOpacity
+                onPress={() => setShowPrivacyModal(false)}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.goBack')}
+              >
+                <Ionicons name="close" size={24} color={colors.secondary} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView contentContainerStyle={styles.privacyScroll} showsVerticalScrollIndicator={false}>
+              <Text style={[styles.privacyDate, { color: colors.secondary }]}>{t('profile.privacyLastUpdated')}</Text>
+              <Text style={[styles.privacyIntro, { color: colors.text }]}>{t('profile.privacyIntro')}</Text>
+
+              <View style={styles.privacySection}>
+                <Text style={[styles.privacySectionTitle, { color: colors.heading }]}>{t('profile.privacyDataCollected')}</Text>
+                <Text style={[styles.privacySectionBody, { color: colors.secondary }]}>{t('profile.privacyDataCollectedBody')}</Text>
+              </View>
+
+              <View style={styles.privacySection}>
+                <Text style={[styles.privacySectionTitle, { color: colors.heading }]}>{t('profile.privacyHowWeUse')}</Text>
+                <Text style={[styles.privacySectionBody, { color: colors.secondary }]}>{t('profile.privacyHowWeUseBody')}</Text>
+              </View>
+
+              <View style={styles.privacySection}>
+                <Text style={[styles.privacySectionTitle, { color: colors.heading }]}>{t('profile.privacyStorage')}</Text>
+                <Text style={[styles.privacySectionBody, { color: colors.secondary }]}>{t('profile.privacyStorageBody')}</Text>
+              </View>
+
+              <View style={styles.privacySection}>
+                <Text style={[styles.privacySectionTitle, { color: colors.heading }]}>{t('profile.privacyContact')}</Text>
+                <Text style={[styles.privacySectionBody, { color: colors.secondary }]}>{t('profile.privacyContactBody')}</Text>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showAboutModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowAboutModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.privacyModalContent, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={styles.privacyHeader}>
+              <Ionicons name="information-circle-outline" size={28} color={colors.accent} />
+              <Text style={[styles.privacyTitle, { color: colors.text }]}>{t('profile.aboutTitle')}</Text>
+              <TouchableOpacity
+                onPress={() => setShowAboutModal(false)}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.goBack')}
+              >
+                <Ionicons name="close" size={24} color={colors.secondary} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView contentContainerStyle={styles.privacyScroll} showsVerticalScrollIndicator={false}>
+              <Text style={[styles.privacyDate, { color: colors.secondary }]}>{t('profile.aboutVersion')}</Text>
+              <Text style={[styles.privacyIntro, { color: colors.text }]}>{t('profile.aboutMissionBody')}</Text>
+
+              <View style={styles.privacySection}>
+                <Text style={[styles.privacySectionTitle, { color: colors.heading }]}>{t('profile.aboutHowItWorks')}</Text>
+                <Text style={[styles.privacySectionBody, { color: colors.secondary }]}>{t('profile.aboutHowItWorksBody')}</Text>
+              </View>
+
+              <View style={styles.privacySection}>
+                <Text style={[styles.privacySectionTitle, { color: colors.heading }]}>{t('profile.aboutTeam')}</Text>
+                <Text style={[styles.privacySectionBody, { color: colors.secondary }]}>{t('profile.aboutTeamBody')}</Text>
+              </View>
+
+              <View style={styles.privacySection}>
+                <Text style={[styles.privacySectionTitle, { color: colors.heading }]}>{t('profile.aboutContact')}</Text>
+                <Text style={[styles.privacySectionBody, { color: colors.secondary }]}>{t('profile.aboutContactBody')}</Text>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showNotificationsModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowNotificationsModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.privacyModalContent, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={styles.privacyHeader}>
+              <Ionicons name="notifications-outline" size={28} color={colors.accent} />
+              <Text style={[styles.privacyTitle, { color: colors.text }]}>{t('profile.notificationsTitle')}</Text>
+              <TouchableOpacity
+                onPress={() => setShowNotificationsModal(false)}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.goBack')}
+              >
+                <Ionicons name="close" size={24} color={colors.secondary} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView contentContainerStyle={styles.privacyScroll} showsVerticalScrollIndicator={false}>
+              <View style={[styles.notificationRow, { backgroundColor: colors.surfaceAlt }]}>
+                <View style={styles.notificationTextContainer}>
+                  <Text style={[styles.notificationTitle, { color: colors.text }]}>{t('profile.notificationsDailyReminders')}</Text>
+                  <Text style={[styles.notificationSubtitle, { color: colors.secondary }]}>{t('profile.notificationsDailyRemindersBody')}</Text>
+                </View>
+                <Switch
+                  value={notificationSettings.dailyReminders}
+                  onValueChange={() => toggleNotificationSetting('dailyReminders')}
+                  trackColor={{ false: colors.border, true: colors.accentLight }}
+                  thumbColor={colors.surface}
+                />
+              </View>
+
+              <View style={[styles.notificationRow, { backgroundColor: colors.surfaceAlt }]}>
+                <View style={styles.notificationTextContainer}>
+                  <Text style={[styles.notificationTitle, { color: colors.text }]}>{t('profile.notificationsStreakAlerts')}</Text>
+                  <Text style={[styles.notificationSubtitle, { color: colors.secondary }]}>{t('profile.notificationsStreakAlertsBody')}</Text>
+                </View>
+                <Switch
+                  value={notificationSettings.streakAlerts}
+                  onValueChange={() => toggleNotificationSetting('streakAlerts')}
+                  trackColor={{ false: colors.border, true: colors.accentLight }}
+                  thumbColor={colors.surface}
+                />
+              </View>
+
+              <View style={[styles.notificationRow, { backgroundColor: colors.surfaceAlt }]}>
+                <View style={styles.notificationTextContainer}>
+                  <Text style={[styles.notificationTitle, { color: colors.text }]}>{t('profile.notificationsAchievementAlerts')}</Text>
+                  <Text style={[styles.notificationSubtitle, { color: colors.secondary }]}>{t('profile.notificationsAchievementAlertsBody')}</Text>
+                </View>
+                <Switch
+                  value={notificationSettings.achievementAlerts}
+                  onValueChange={() => toggleNotificationSetting('achievementAlerts')}
+                  trackColor={{ false: colors.border, true: colors.accentLight }}
+                  thumbColor={colors.surface}
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[styles.testNotificationButton, { backgroundColor: colors.accent }]}
+                accessibilityRole="button"
+                accessibilityLabel={t('profile.notificationsTest')}
+              >
+                <Text style={styles.testNotificationText}>{t('profile.notificationsTest')}</Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -468,6 +662,97 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   modalButtonTextConfirm: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  privacyModalContent: {
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 380,
+    maxHeight: '80%',
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  privacyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  privacyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+    flex: 1,
+    marginLeft: 12,
+  },
+  privacyScroll: {
+    paddingBottom: 12,
+  },
+  privacyDate: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 12,
+  },
+  privacyIntro: {
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  privacySection: {
+    marginBottom: 18,
+  },
+  privacySectionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  privacySectionBody: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  notificationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    borderRadius: 14,
+    marginBottom: 12,
+  },
+  notificationTextContainer: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  notificationTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  notificationSubtitle: {
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+  },
+  testNotificationButton: {
+    marginTop: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#1a3529',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  testNotificationText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#fff',
